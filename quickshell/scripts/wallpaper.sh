@@ -148,7 +148,47 @@ cmd_set() {
     if [[ -z "$output" ]]; then
         mkdir -p "$(dirname "$STATE")"
         printf '%s\n' "$pic" > "$STATE"
+
+        # Unconditionally, rather than only for rices that derive their
+        # colours. Generating is cheap, and doing it always means switching a
+        # rice to dynamic takes effect immediately instead of waiting for the
+        # next wallpaper. Whether the palette is *used* is decided in
+        # lib/palette.lua, which is the layer that should decide it.
+        #
+        # Best effort: a missing matugen or an image it cannot read leaves the
+        # previous palette in place rather than failing the wallpaper change.
+        "$SCRIPTS_DIR/generate-palette.sh" "$pic" || true
+
+        repaint
     fi
+}
+
+# Push a regenerated palette out to the things that read it.
+#
+# Only for a rice that derives its colours: for any other, the palette did not
+# change and re-rendering would be churn ending in a compositor reload nobody
+# asked for.
+#
+# Without this a wallpaper change on a dynamic rice would rewrite
+# palette-generated.lua and stop there -- the new colours would not appear until
+# something else happened to re-render, which is a confusing way for a feature
+# whose whole point is that the desktop follows the picture to behave.
+repaint() {
+    local desktop="${SCRIPTS_DIR%/quickshell/scripts}"
+    local from
+
+    from="$(lua -e "package.path='$desktop/?.lua;'..package.path
+                    print(require('lib.rice').palette_from)" 2> /dev/null || true)"
+
+    [[ "$from" == "wallpaper" ]] || return 0
+
+    lua "$desktop/render-theme.lua" > /dev/null || return 0
+
+    # The bar watches its own colour file and repaints itself; the compositor
+    # has to be told.
+    [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && hyprctl reload > /dev/null 2>&1
+
+    return 0
 }
 
 cmd_current() {
