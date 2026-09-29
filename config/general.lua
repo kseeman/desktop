@@ -1,11 +1,12 @@
 -- Gaps, borders and layout.
 local palette = require("lib.palette")
+local look = require("lib.look")
 
 hl.config({
     general = {
-        gaps_in = 3,
-        gaps_out = 8,
-        border_size = 2,
+        gaps_in = look.gaps_in,
+        gaps_out = look.gaps_out,
+        border_size = look.border_size,
         resize_on_border = true,
         layout = "dwindle",
 

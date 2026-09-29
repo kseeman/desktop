@@ -42,6 +42,26 @@ require("bindings")
 require("config.startup")
 
 -- -----------------------------------------------------------------------------
+-- Rice warnings
+-- -----------------------------------------------------------------------------
+
+-- Anything lib/rice.lua had to work around -- a name that no longer matches a
+-- directory, a rice.lua that does not parse. It falls back rather than failing,
+-- which is right for runtime state a switch can leave half-written, but a
+-- silent fallback is how you end up wondering why a look did not change.
+--
+-- Raised here rather than there because that module is loaded while the config
+-- is still parsing, when there is no session to notify yet.
+local rice = require("lib.rice")
+
+for _, warning in ipairs(rice.warnings) do
+    hl.notification.create({
+        text = "rice: " .. warning,
+        timeout = 10000,
+    })
+end
+
+-- -----------------------------------------------------------------------------
 -- Machine-local configuration
 -- -----------------------------------------------------------------------------
 

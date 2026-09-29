@@ -6,52 +6,39 @@
 -- config file contains a hex literal, which is what makes the scheme swappable
 -- later without touching anything that uses it.
 --
--- Right now this returns fixed values. At the point the theme engine lands it
--- loads generated data instead and falls back to these, and not one consumer
--- changes -- only the body of this file:
+-- The values come from the active rice -- see lib/rice.lua. What is left here
+-- is the floor underneath them.
 --
---   local ok, generated = pcall(dofile, cache .. "/palette.lua")
---   local M = setmetatable(ok and generated or {}, { __index = FALLBACK })
+-- **The fallback is deliberately not a theme.** It is a flat grey, so a rice
+-- that fails to load gives a dull desktop that plainly looks wrong rather than
+-- a plausible one that quietly is. A config that errors here would take the
+-- login with it, so nothing errors; it just goes grey.
 --
--- Those fallback values are a floor, not a theme. A missing or half-written
--- cache should give a dull desktop, never an unstartable session -- a config
--- that errors here takes the login with it.
---
--- The same discipline applies per consumer as each arrives: waybar gets an
--- @define-color block, rofi a `*` block, kitty a single included file. That is
--- already how os/linux/hyde-themes/Custom/{waybar,rofi,kitty}.theme are
--- written, so the pattern is proven here rather than invented.
+-- Keeping the floor drab also means it is never a second copy of a real
+-- scheme's values, which would drift the moment that scheme changed.
+local rice = require("lib.rice")
 
-local M = {}
+local FLOOR = {
+    root = "#101010",
+    base = "#1A1A1A",
+    raised = "#262626",
+    overlay = "#333333",
+    muted = "#4D4D4D",
 
--- -----------------------------------------------------------------------------
--- Values
--- -----------------------------------------------------------------------------
+    accent = "#666666",
+    accent_deep = "#555555",
 
--- A single-hue tonal ramp: chroma and lightness rise together, which is the
--- shape Material You produces and therefore what matugen will generate into
--- these same names.
---
--- The text is deliberately a desaturated grey rather than a tinted one. Colour
--- lives in the surfaces; foreground that carries the hue is what makes a dark
--- scheme hard to read, and it is how the previous theme ended up with red,
--- green and yellow nearly indistinguishable.
+    bar = "#141414",
 
-M.root = "#120D1D" -- behind everything: the gaps between windows
-M.base = "#1F1829" -- ordinary surface
-M.raised = "#322948" -- a surface above the base
-M.overlay = "#453852" -- popups, menus
-M.muted = "#595162" -- borders and dividers, inactive chrome
+    fg = "#C0C0C0",
+    fg_bright = "#E8E8E8",
+    fg_muted = "#A0A0A0",
+    fg_dim = "#808080",
+}
 
-M.accent = "#6E5E8C" -- focus, selection, the active border
-M.accent_deep = "#594583" -- the accent where it needs more weight
-
-M.bar = "#18151A" -- panel ground, near black and barely warm
-
-M.fg = "#B5B0B1" -- primary text
-M.fg_bright = "#E4E1E2" -- the brightest text, for the one thing being read
-M.fg_muted = "#A79EA3" -- between primary and secondary: icons, inactive ticks
-M.fg_dim = "#8F7D86" -- secondary text, inactive labels
+-- __index rather than a copy, so a rice defining only some names still gets the
+-- rest rather than nil -- which would reach a config file as an empty string.
+local M = setmetatable(rice.palette or {}, { __index = FLOOR })
 
 -- -----------------------------------------------------------------------------
 -- Formats

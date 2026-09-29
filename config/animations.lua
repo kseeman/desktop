@@ -10,7 +10,7 @@
 -- these same two values -- if they drift apart, this file is the one that is
 -- wrong, because the shell is what the eye follows.
 local MOTION = "morph"
-local MOTION_SPEED = 4.2
+local MOTION_SPEED = require("lib.look").motion_speed
 
 hl.config({ animations = { enabled = true } })
 
