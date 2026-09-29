@@ -7,7 +7,20 @@
 # session directory is root-owned and shared, so a relative or ~-based path
 # would never resolve.
 #
-# The "--" before the compositor is load-bearing, not punctuation. uwsm parses
+# There are two "--" here and they do different jobs. The first separates
+# uwsm's own options from the compositor command line; the second tells
+# start-hyprland which arguments to hand on to Hyprland.
+#
+# start-hyprland rather than Hyprland directly: launching the binary itself
+# prints "Hyprland is being launched without start-hyprland. This is highly
+# advised against." at every login, because that wrapper supervises the
+# compositor through a watchdog. Naming it as the first argument does mean uwsm
+# takes it as the compositor id, so the generated units are
+# wayland-wm@start-hyprland.service rather than @Hyprland -- cosmetic here,
+# since nothing references those names and -D Hyprland still sets
+# XDG_CURRENT_DESKTOP, which is what the env files key off.
+#
+# The first "--" is load-bearing, not punctuation. uwsm parses
 # its command line with argparse, taking the compositor as a plain positional,
 # and never calls parse_known_args -- so a trailing "--config <path>" is read as
 # an option to uwsm itself and rejected with "unrecognized arguments". uwsm then
@@ -26,7 +39,7 @@
 # no HyDE file touched. Removing this one file reverts to HyDE entirely.
 Name=Hyprland (dotfiles)
 Comment=Lua-native Hyprland configuration from this dotfiles repository
-Exec=uwsm start -e -D Hyprland -- Hyprland --config @INIT_LUA@
+Exec=uwsm start -e -D Hyprland -- start-hyprland -- --config @INIT_LUA@
 TryExec=Hyprland
 DesktopNames=Hyprland
 Type=Application
