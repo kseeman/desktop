@@ -25,15 +25,22 @@
 # Fitting
 # -----------------------------------------------------------------------------
 #
-# **Never stretch.** awww's default is `crop`, which fills the screen and
-# discards what does not fit while keeping the aspect ratio -- the distortion
+# **Never stretch.** Aspect ratio is kept whatever the mode, so the distortion
 # that made wallpapers look wrong under HyDE is not inherited here.
 #
-# On a 5120x1440 ultrawide, crop keeps the width and discards roughly 60% of a
-# 16:9 image's height, and --crop-gravity chooses which part survives. When that
-# loses too much, DOTFILES_WALLPAPER_RESIZE=fit shows the whole image and pads
-# it -- with the palette's darkest colour rather than black, so the padding
-# reads as part of the desktop.
+# The mode is `wallpaper_fit` in lib/look.lua, defaulting to `fit`: the whole
+# image is shown and the rest padded. awww's own default is `crop`, which fills
+# the screen and discards the overflow -- on the 32:9 ultrawide this was written
+# for, a 16:9 image silently loses half its height, which looks like a stretch
+# without being one. fit fails visibly instead.
+#
+# The cost is real and worth knowing: fit puts a 16:9 image in the middle 2560
+# of 5120 pixels. Whichever way, a screen and an image of different shapes give
+# up something. `crop` plus `wallpaper_gravity` is the better trade for a
+# collection that mostly matches the screen.
+#
+# `wallpaper_fill` decides what the padding is -- by default the image's own
+# darkest surface, so it belongs to the picture rather than to the rice.
 
 set -euo pipefail
 
@@ -45,19 +52,67 @@ DIR_STATE="$STATE_HOME/ricelin-wallpaper-dir"
 
 FLAGS="$STATE_HOME/ricelin/flags.json"
 
-RESIZE="${DOTFILES_WALLPAPER_RESIZE:-crop}"
-GRAVITY="${DOTFILES_WALLPAPER_GRAVITY:-center}"
-
-# The padding colour when fitting. Read through the palette so it follows the
-# active rice, the same as every other colour here.
-#
 # The symlink this script is reached through lands in ~/.config/hypr/scripts, so
 # the desktop directory is two levels up from the real file rather than from $0.
-fill_color() {
-    local desktop="${SCRIPTS_DIR%/quickshell/scripts}"
+DESKTOP_DIR="${SCRIPTS_DIR%/quickshell/scripts}"
 
-    lua -e "package.path='$desktop/?.lua;'..package.path
-            print((require('lib.palette').root:gsub('^#','')))" 2> /dev/null || echo "000000"
+# Ask the active look for a knob. Empty on any failure, so every caller keeps
+# its own default rather than this one inventing a second set.
+look() {
+    lua -e "package.path='$DESKTOP_DIR/?.lua;'..package.path
+            io.write(tostring(require('lib.look')['$1'] or ''))" 2> /dev/null || true
+}
+
+# Env beats the look, which beats the built-in -- the usual order. The env vars
+# stay because a one-off is worth having without editing a rice; they are not
+# how this is configured.
+RESIZE="${DOTFILES_WALLPAPER_RESIZE:-$(look wallpaper_fit)}"
+RESIZE="${RESIZE:-fit}"
+
+GRAVITY="${DOTFILES_WALLPAPER_GRAVITY:-$(look wallpaper_gravity)}"
+GRAVITY="${GRAVITY:-center}"
+
+FILL="${DOTFILES_WALLPAPER_FILL:-$(look wallpaper_fill)}"
+FILL="${FILL:-sampled}"
+
+# Resolve `wallpaper_fill` to six hex digits, which is what awww wants.
+#
+#   "sampled"   the current image's darkest surface, from the generated palette
+#   "#RRGGBB"   a literal, passed through
+#   "<name>"    a palette token, read through lib.palette so it follows the rice
+#
+# `sampled` reads palette-generated.lua directly rather than lib.palette,
+# because that file is written on every wallpaper change while lib.palette only
+# *uses* it for a rice that asked for a generated palette. The padding should
+# follow the picture whether or not the rice does.
+#
+# Every path falls back rather than failing: padding is cosmetic, and no colour
+# is worth refusing to set a wallpaper over.
+fill_color() {
+    local generated="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/theme/palette-generated.lua"
+    local value=""
+
+    case "$FILL" in
+        sampled)
+            value="$(lua -e "local ok,p = pcall(dofile, '$generated')
+                             io.write(ok and p and p.root or '')" 2> /dev/null || true)"
+            ;;
+        \#*)
+            value="$FILL"
+            ;;
+        *)
+            value="$(lua -e "package.path='$DESKTOP_DIR/?.lua;'..package.path
+                             io.write(tostring(require('lib.palette')['$FILL'] or ''))" 2> /dev/null || true)"
+            ;;
+    esac
+
+    # A sampled palette that is not there yet -- first wallpaper of a fresh
+    # machine, or no matugen -- falls to the rice's own darkest surface, and
+    # black underneath that.
+    [[ -n "$value" ]] || value="$(lua -e "package.path='$DESKTOP_DIR/?.lua;'..package.path
+                                          io.write(tostring(require('lib.palette').root or ''))" 2> /dev/null || true)"
+
+    printf '%s' "${value:-#000000}" | sed 's/^#//'
 }
 
 # -----------------------------------------------------------------------------
@@ -135,6 +190,24 @@ cmd_set() {
 
     ensure_daemon
 
+    # Before awww, not after, because `wallpaper_fill = "sampled"` reads the
+    # palette this writes -- generating afterwards would pad every wallpaper
+    # with the previous one's colour.
+    #
+    # Whole-desktop only, as before: a per-output set leaves the other screens
+    # alone, so it has no business redefining the desktop's palette. Its padding
+    # therefore comes from whichever image was set across everything last.
+    #
+    # Best effort: a missing matugen or an image it cannot read leaves the
+    # previous palette in place rather than failing the wallpaper change.
+    #
+    # The window this opens: if awww then fails, the palette describes a
+    # wallpaper that is not up. Nothing re-renders (repaint is below awww), so
+    # the running desktop is unaffected until something else re-renders it.
+    if [[ -z "$output" ]]; then
+        "$SCRIPTS_DIR/generate-palette.sh" "$pic" || true
+    fi
+
     local -a args=(img)
     [[ -n "$output" ]] && args+=(--outputs "$output")
 
@@ -158,16 +231,6 @@ cmd_set() {
         mkdir -p "$(dirname "$STATE")"
         printf '%s\n' "$pic" > "$STATE"
 
-        # Unconditionally, rather than only for rices that derive their
-        # colours. Generating is cheap, and doing it always means switching a
-        # rice to dynamic takes effect immediately instead of waiting for the
-        # next wallpaper. Whether the palette is *used* is decided in
-        # lib/palette.lua, which is the layer that should decide it.
-        #
-        # Best effort: a missing matugen or an image it cannot read leaves the
-        # previous palette in place rather than failing the wallpaper change.
-        "$SCRIPTS_DIR/generate-palette.sh" "$pic" || true
-
         repaint
     fi
 }
@@ -183,15 +246,14 @@ cmd_set() {
 # something else happened to re-render, which is a confusing way for a feature
 # whose whole point is that the desktop follows the picture to behave.
 repaint() {
-    local desktop="${SCRIPTS_DIR%/quickshell/scripts}"
     local from
 
-    from="$(lua -e "package.path='$desktop/?.lua;'..package.path
+    from="$(lua -e "package.path='$DESKTOP_DIR/?.lua;'..package.path
                     print(require('lib.rice').palette_from)" 2> /dev/null || true)"
 
     [[ "$from" == "wallpaper" ]] || return 0
 
-    lua "$desktop/render-theme.lua" > /dev/null || return 0
+    lua "$DESKTOP_DIR/render-theme.lua" > /dev/null || return 0
 
     # The bar watches its own colour file and repaints itself; the compositor
     # has to be told.
