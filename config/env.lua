@@ -9,7 +9,7 @@
 --
 -- Hardware-specific variables do NOT belong here. NVIDIA driver selection,
 -- VA-API backends and anything else describing one machine go in
--- ~/.userconfig/hypr/local.lua, for the same reason monitors.conf and
+-- ~/.config/dotfiles/hypr/local.lua, for the same reason monitors.conf and
 -- nvidia.conf are excluded from this repo.
 
 -- Qt applications. QT_QPA_PLATFORMTHEME points at qt6ct, which is what makes

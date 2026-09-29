@@ -46,7 +46,7 @@ require("config.startup")
 
 -- Loaded last so it outranks everything above, and optional so a machine
 -- without one is not an error -- the same arrangement as
--- ~/.userconfig/nvim/local.lua and ~/.userconfig/zsh/local.zsh.
+-- ~/.config/dotfiles/nvim/local.lua and ~/.config/dotfiles/zsh/local.zsh.
 --
 -- This is where a machine describes itself, and it is not a convenience:
 -- monitors are the obvious case. hl.monitor() names physical outputs, which
@@ -58,13 +58,14 @@ require("config.startup")
 -- Hardware environment belongs here too: NVIDIA driver selection, VA-API
 -- backends, anything describing one graphics stack.
 --
---   -- ~/.userconfig/hypr/local.lua
+--   -- ~/.config/dotfiles/hypr/local.lua
 --   hl.monitor({ output = "DP-1", mode = "5120x1440@239.76", position = "auto", scale = 1 })
 --   hl.env("LIBVA_DRIVER_NAME", "nvidia")
 --
 -- pcall rather than a file check: a local config that throws should say so and
 -- leave the rest of the session standing, not take the login down with it.
-local user_config = os.getenv("HOME") .. "/.userconfig/hypr/local.lua"
+local xdg_config = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+local user_config = xdg_config .. "/dotfiles/hypr/local.lua"
 
 local ok, err = pcall(dofile, user_config)
 
