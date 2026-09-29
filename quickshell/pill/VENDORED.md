@@ -46,6 +46,17 @@ hand if this is ever re-copied from upstream.
     reserves it from tiled windows) and they have to agree, so each carries a
     comment pointing at the other.
 
+  - `Settings.qml` + `GlyphIcon.qml` + `Pill.qml` — a **Wallpaper** row in the
+    settings index, third, between Look and Display.
+
+    Upstream ships the wallpaper surface with no way into it: `Wallpaper.qml` is
+    complete, `shell.qml` exposes it over IPC, and nothing in the UI calls
+    `requestSurface("wallpaper")`. They open it by other means, so the surface
+    was unreachable here. The row is the ordinary `kind: "nav"` shape, so it
+    needed no new machinery — only the entry, an `image` glyph (the set had no
+    picture icon), and `wallpaperOpen` added to `surfaceBack()`'s
+    settings-return list so its header behaves like every other sub-surface.
+
   - `Pill.qml` — the body's drop shadow is off (`layer.enabled: false` where
     upstream has `!pill.morphing` and a `MultiEffect`). Upstream draws a
     0.7-blur shadow at 50% black offset 3px down, which reads as a halo pooling

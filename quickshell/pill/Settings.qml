@@ -16,6 +16,7 @@ SettingsSurface {
     rows: [
         { item: appearanceRow, kind: "nav", surface: "appearance" },
         { item: lookRow, kind: "nav", surface: "look" },
+        { item: wallpaperRow, kind: "nav", surface: "wallpaper" },
         { item: displayRow, kind: "nav", surface: "display" },
         { item: inputRow, kind: "nav", surface: "input" },
         { item: animationRow, kind: "nav", surface: "animation" },
@@ -68,6 +69,23 @@ SettingsSurface {
                 height: 16 * root.s
                 name: "chevron-right"
                 color: root.focusRowItem === lookRow ? Theme.cream : Theme.iconDim
+                stroke: 2.2
+            }
+        }
+
+        SettingsRow {
+            id: wallpaperRow
+            surface: root
+            captionOnFocus: true
+            icon: "image"
+            name: "Wallpaper"
+            sub: "Pick, set per screen, delete"
+
+            GlyphIcon {
+                width: 16 * root.s
+                height: 16 * root.s
+                name: "chevron-right"
+                color: root.focusRowItem === wallpaperRow ? Theme.cream : Theme.iconDim
                 stroke: 2.2
             }
         }
