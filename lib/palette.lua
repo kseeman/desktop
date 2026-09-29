@@ -49,6 +49,8 @@ M.accent_deep = "#594583" -- the accent where it needs more weight
 M.bar = "#18151A" -- panel ground, near black and barely warm
 
 M.fg = "#B5B0B1" -- primary text
+M.fg_bright = "#E4E1E2" -- the brightest text, for the one thing being read
+M.fg_muted = "#A79EA3" -- between primary and secondary: icons, inactive ticks
 M.fg_dim = "#8F7D86" -- secondary text, inactive labels
 
 -- -----------------------------------------------------------------------------

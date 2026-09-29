@@ -14,13 +14,17 @@
 --                      environment. uwsm exports it and systemd activates them;
 --                      both portals were confirmed active in this session
 --                      without any help, so the reset is not carried over.
---   dunst              D-Bus activated via org.knopwob.dunst.service, so it
---                      starts itself on the first notification. Launching it
---                      here would race the systemd unit for the bus name.
+--   dunst              the pill is the notification server now. It claims
+--                      org.freedesktop.Notifications at startup, and only one
+--                      process may own that name, so dunst is never activated
+--                      while the pill holds it -- no masking required. If the
+--                      pill dies, the next notification activates dunst, which
+--                      is a fallback worth keeping rather than a conflict.
 --   battery notify     this machine is a desktop.
---   nm-applet,         tray applets with no tray to sit in until P5. Starting
---   blueman-applet     them now would be invisible processes.
---   waybar, wallpaper  P5.
+--   nm-applet,         the pill has its own wifi and bluetooth surfaces, and a
+--   blueman-applet     tray for everything else. These would duplicate it.
+--   waybar, wallpaper  the pill replaces both: it is the bar, and it sets the
+--                      wallpaper itself from Flags.wallpaperDir.
 local DESKTOP = os.getenv("HOME") .. "/.dotfiles/os/linux/desktop"
 
 hl.on("hyprland.start", function()
@@ -51,4 +55,14 @@ hl.on("hyprland.start", function()
     -- started by hand. --silent starts it to the tray rather than opening a
     -- window over whatever is already there.
     hl.exec_cmd("1password --silent")
+
+    -- The bar. It is also the notification server, the wallpaper setter, the
+    -- launcher's clipboard view and the power menu, which is why so little else
+    -- is started here.
+    --
+    -- Its colours come from $XDG_CACHE_HOME/ricelin/colors.json, written by
+    -- quickshell/apply-palette.sh from lib/palette.lua. The pill watches that
+    -- file, so a theme change repaints it without a restart and nothing here
+    -- needs to know about colour.
+    hl.exec_cmd("quickshell -p " .. DESKTOP .. "/quickshell/pill")
 end)
