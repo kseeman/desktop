@@ -46,6 +46,18 @@ hand if this is ever re-copied from upstream.
     reserves it from tiled windows) and they have to agree, so each carries a
     comment pointing at the other.
 
+  - `Updates.qml` is **deleted**, with its row, loader and `updatesW`/
+    `updatesOpen`/`surfaces` entries, and `authPending` with it.
+
+    It drove Ricelin's own updater at `~/.config/hypr/scripts/ricelin-update.py`
+    — a script this repo never installs. Its job is to pull upstream over the
+    install and three-way-merge the local edits, which is the thing copying
+    rather than cloning exists to prevent, so it was never going to be wired up.
+    `authPending` existed only to drop the pill's modal grab for that updater's
+    pkexec prompt, so `shell.qml`'s `modal` and `keyboardFocus` lost their
+    branch on it. `Settings.qml`'s `idleRow` gained `last: true`, which the
+    Updates row had been carrying.
+
   - `Settings.qml` + `GlyphIcon.qml` + `Pill.qml` — a **Wallpaper** row in the
     settings index, third, between Look and Display.
 
