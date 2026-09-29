@@ -15,7 +15,7 @@ local BROWSER = "brave"
 local EDITOR = "code"
 local FILES = "dolphin"
 
-hl.bind(mod .. " + T", hl.dsp.exec_cmd(TERMINAL), { desc = "terminal" })
+hl.bind(mod .. " + Return", hl.dsp.exec_cmd(TERMINAL), { desc = "terminal" })
 hl.bind(mod .. " + B", hl.dsp.exec_cmd(BROWSER), { desc = "web browser" })
 hl.bind(mod .. " + C", hl.dsp.exec_cmd(EDITOR), { desc = "editor" })
 hl.bind(mod .. " + E", hl.dsp.exec_cmd(FILES), { desc = "file manager" })

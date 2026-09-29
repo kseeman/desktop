@@ -210,10 +210,11 @@ hl.window_rule({
 -- -----------------------------------------------------------------------------
 
 -- Blur behind the shell's own surfaces. The namespaces here are the ones in use
--- today; P5 replaces them when the bar and launcher change, and a namespace
--- that no longer exists is simply a rule that never matches.
+-- today, and a namespace that no longer exists is simply a rule that never
+-- matches -- which is why the swaync and logout entries are left alone rather
+-- than pruned as each is replaced.
 for _, namespace in ipairs({
-    "rofi",
+    "pill",
     "notifications",
     "swaync-notification-window",
     "swaync-control-center",
