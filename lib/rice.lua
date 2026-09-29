@@ -110,6 +110,14 @@ local definition = load_file(M.name, "rice.lua") or {}
 --- Colours, or nil to leave the palette on its fallback floor.
 M.palette = load_file(M.name, "palette.lua")
 
+--- Where the rest of the colours come from. "wallpaper" derives them from the
+--- image currently set, via matugen; anything else means the rice supplies its
+--- own or falls to the floor.
+---
+--- Not exclusive with palette.lua: a rice can derive most of a scheme and still
+--- pin the colours it cares about, because the static values win.
+M.palette_from = definition.palette_from or ""
+
 --- Role to provider name. Partial: roles the rice does not mention keep the
 --- default provider, so a rice that only changes the launcher says only that.
 M.providers = definition.providers or {}
