@@ -1,11 +1,46 @@
--- Curves have to be defined before the animations that name them.
+-- Animations.
+--
+-- One curve and one speed for every leaf, which is the whole point. The
+-- compositor and the shell have to animate identically or the desktop reads as
+-- two programs sharing a screen: a window opening at one rate beside a panel
+-- sliding at another is what makes a setup feel assembled rather than designed.
+--
+-- MOTION_SPEED is in Hyprland's units, where 4.2 is roughly 420ms. When P5
+-- brings up the shell, its transition duration and easing must be set from
+-- these same two values -- if they drift apart, this file is the one that is
+-- wrong, because the shell is what the eye follows.
+local MOTION = "morph"
+local MOTION_SPEED = 4.2
+
 hl.config({ animations = { enabled = true } })
 
-hl.curve("easeOutQuint", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })
-hl.curve("almostLinear", { type = "bezier", points = { { 0.5, 0.5 }, { 0.75, 1 } } })
-hl.curve("easy", { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 })
+-- cubic-bezier(0.16, 1, 0.3, 1): fast departure, long settle. The long tail is
+-- what reads as weight; a symmetric curve at the same duration feels abrupt.
+hl.curve(MOTION, { type = "bezier", points = { { 0.16, 1.00 }, { 0.30, 1.00 } } })
 
-hl.animation({ leaf = "windows", enabled = true, speed = 4.79, spring = "easy" })
-hl.animation({ leaf = "border", enabled = true, speed = 5.39, bezier = "easeOutQuint" })
-hl.animation({ leaf = "fade", enabled = true, speed = 3.03, bezier = "almostLinear" })
-hl.animation({ leaf = "workspaces", enabled = true, speed = 1.94, bezier = "almostLinear", style = "fade" })
+-- Style is per-leaf because it says what moves, not how fast. Speed and curve
+-- stay uniform.
+local leaves = {
+    { leaf = "global" },
+    { leaf = "windows" },
+    { leaf = "windowsIn", style = "popin 92%" },
+    { leaf = "windowsOut", style = "popin 92%" },
+    { leaf = "border" },
+    { leaf = "fade" },
+    { leaf = "fadeIn" },
+    { leaf = "fadeOut" },
+    { leaf = "layers", style = "popin 90%" },
+    { leaf = "fadeLayersIn" },
+    { leaf = "fadeLayersOut" },
+    { leaf = "workspaces", style = "slide" },
+}
+
+for _, animation in ipairs(leaves) do
+    hl.animation({
+        leaf = animation.leaf,
+        enabled = true,
+        speed = MOTION_SPEED,
+        bezier = MOTION,
+        style = animation.style,
+    })
+end
