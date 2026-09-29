@@ -1,0 +1,21 @@
+[Desktop Entry]
+# Installed to /usr/share/wayland-sessions/ by os/linux/install.sh, which
+# substitutes @INIT_LUA@ for the absolute path to this repo's init.lua.
+#
+# A template rather than a tracked file because the path has to be absolute --
+# Desktop Entry field codes do not include one for the home directory, and the
+# session directory is root-owned and shared, so a relative or ~-based path
+# would never resolve.
+#
+# The config is named with --config rather than by setting HYPRLAND_CONFIG.
+# HyDE's ~/.config/uwsm/env-hyprland.d/00-hyde.sh assigns that variable
+# unconditionally, so relying on it would mean winning an ordering contest
+# inside uwsm's env.d; --config is read in preference to the variable and needs
+# no HyDE file touched. Removing this one file reverts to HyDE entirely.
+Name=Hyprland (dotfiles)
+Comment=Lua-native Hyprland configuration from this dotfiles repository
+Exec=uwsm start -e -D Hyprland Hyprland --config @INIT_LUA@
+TryExec=Hyprland
+DesktopNames=Hyprland
+Type=Application
+Keywords=tiling;wayland;compositor;
