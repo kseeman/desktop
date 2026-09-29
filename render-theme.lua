@@ -148,6 +148,7 @@ end
 -- implementation.
 local BASE = {
     { src = "tmux.conf.in", out = "$THEME_DIR/tmux.conf" },
+    { src = "kitty.conf.in", out = "$THEME_DIR/kitty.conf" },
 }
 
 local templates = {}
