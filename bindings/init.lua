@@ -11,16 +11,8 @@ local mod = "SUPER"
 
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"), { desc = "terminal" })
 
--- The launcher. Until this existed the only way to start anything was a
--- terminal, which makes the session escapable but not usable -- a distinction
--- worth keeping in mind for the rest of the bindings.
---
--- rofi is unstyled here and will look nothing like the rest of the desktop
--- until it reads a generated theme. That is P5/P6; a plain launcher now beats a
--- styled one later.
-hl.bind(mod .. " + R", hl.dsp.exec_cmd("rofi -show drun"), { desc = "launcher" })
 hl.bind(mod .. " + Q", hl.dsp.window.close(), { desc = "close window" })
-hl.bind(mod .. " + V", hl.dsp.window.float({ action = "toggle" }), { desc = "toggle floating" })
+hl.bind(mod .. " + W", hl.dsp.window.float({ action = "toggle" }), { desc = "toggle floating" })
 hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"), { desc = "toggle split" })
 
 -- Deliberately bound from the first boot: without it, leaving this session
@@ -39,3 +31,6 @@ end
 
 hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, desc = "drag window" })
 hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, desc = "resize window" })
+
+require("bindings.launchers")
+require("bindings.screenshot")
