@@ -30,7 +30,12 @@
 
 set -euo pipefail
 
-SNAPSHOT_ROOT="${DOTFILES_SNAPSHOT_DIR:-$HOME/.config-backups}"
+# Resolved the same way snapshot.sh resolves it. The paths *inside* an archive
+# are whatever the XDG variables were when it was written, and restore.sh never
+# reinterprets them -- it replays PATHS as recorded, so an archive taken under
+# one layout restores to that same layout rather than being silently relocated
+# into the current one.
+SNAPSHOT_ROOT="${DOTFILES_SNAPSHOT_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/snapshots}"
 
 DRY_RUN=false
 ASSUME_YES=false

@@ -8,7 +8,7 @@
 # is today. This exists for the HyDE -> Lua migration: every phase of that work
 # is reversible, and this is what "reversible" is measured against.
 #
-#   snapshot.sh                 snapshot to ~/.config-backups/<timestamp>
+#   snapshot.sh                 snapshot to $XDG_DATA_HOME/dotfiles/snapshots
 #   snapshot.sh p0-baseline     ... with a label, for per-phase snapshots
 #   snapshot.sh --dry-run       show what would be captured
 #
@@ -27,10 +27,51 @@
 set -euo pipefail
 
 # -----------------------------------------------------------------------------
+# XDG base directories
+# -----------------------------------------------------------------------------
+
+# Resolved, not assumed. This machine has all four set to their defaults, so
+# hardcoding ~/.config would work here by coincidence -- and coincidence is how
+# `dev` broke: it assumed ~/.zshrc while ZDOTDIR pointed at ~/.config/zsh.
+# A tool that reads and deletes across 31 roots gets to assume less than that.
+XDG_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+XDG_STATE="${XDG_STATE_HOME:-$HOME/.local/state}"
+
+# Not in the base directory spec, but the de facto name for it, and the spec
+# does reserve ~/.local/bin as the default.
+XDG_BIN="${XDG_BIN_HOME:-$HOME/.local/bin}"
+
+# The archive stores paths relative to $HOME -- rsync -R pivoting on $HOME/./ --
+# so a base directory outside $HOME cannot be represented in it at all. Refusing
+# is the only honest answer: capturing nothing silently would leave a snapshot
+# that looks complete and restores a desktop that is missing pieces.
+for pair in \
+    "XDG_CONFIG_HOME:$XDG_CONFIG" \
+    "XDG_DATA_HOME:$XDG_DATA" \
+    "XDG_STATE_HOME:$XDG_STATE" \
+    "XDG_BIN_HOME:$XDG_BIN"; do
+
+    if [[ "${pair#*:}" != "$HOME"/* ]]; then
+        echo "snapshot.sh: ${pair%%:*} is outside \$HOME: ${pair#*:}" >&2
+        echo "The archive stores \$HOME-relative paths and cannot capture it." >&2
+        exit 1
+    fi
+done
+
+CONFIG="${XDG_CONFIG#"$HOME"/}"
+DATA="${XDG_DATA#"$HOME"/}"
+STATE="${XDG_STATE#"$HOME"/}"
+BIN="${XDG_BIN#"$HOME"/}"
+
+# -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
 
-SNAPSHOT_ROOT="${DOTFILES_SNAPSHOT_DIR:-$HOME/.config-backups}"
+# An archive is data, not state: XDG calls state the things that are "not
+# important or portable enough" to be data -- logs, history, window layout --
+# and the whole point of this one is that losing it would matter.
+SNAPSHOT_ROOT="${DOTFILES_SNAPSHOT_DIR:-$XDG_DATA/dotfiles/snapshots}"
 
 DRY_RUN=false
 LABEL=""
@@ -54,35 +95,39 @@ LABEL=""
 #
 # ~/.local/share/icons (6.7GB) is left out: it is an installed asset, replaced
 # by reinstalling its package, and nothing here modifies it.
+#
+# ~/.local/lib has no XDG variable -- the spec defines no lib directory -- so it
+# stays relative to $HOME, as do the three legacy dotfiles at the end, which
+# predate the spec and are read from $HOME by the programs that own them.
 SNAPSHOT_PATHS=(
-    .config/hypr
-    .config/hyde
-    .config/waybar
-    .config/rofi
-    .config/dunst
-    .config/wlogout
-    .config/kitty
-    .config/fastfetch
-    .config/Kvantum
-    .config/qt5ct
-    .config/qt6ct
-    .config/gtk-3.0
-    .config/gtk-4.0
-    .config/xsettingsd
-    .config/uwsm
-    .config/pypr
-    .config/zsh
-    .config/dconf
-    .config/systemd/user
+    "$CONFIG/hypr"
+    "$CONFIG/hyde"
+    "$CONFIG/waybar"
+    "$CONFIG/rofi"
+    "$CONFIG/dunst"
+    "$CONFIG/wlogout"
+    "$CONFIG/kitty"
+    "$CONFIG/fastfetch"
+    "$CONFIG/Kvantum"
+    "$CONFIG/qt5ct"
+    "$CONFIG/qt6ct"
+    "$CONFIG/gtk-3.0"
+    "$CONFIG/gtk-4.0"
+    "$CONFIG/xsettingsd"
+    "$CONFIG/uwsm"
+    "$CONFIG/pypr"
+    "$CONFIG/zsh"
+    "$CONFIG/dconf"
+    "$CONFIG/systemd/user"
     .local/lib/hyde
-    .local/share/hyde
-    .local/share/hypr
-    .local/share/waybar
-    .local/share/rofi
-    .local/share/themes
-    .local/state/hyde
-    .local/bin/hyde-shell
-    .local/bin/hydectl
+    "$DATA/hyde"
+    "$DATA/hypr"
+    "$DATA/waybar"
+    "$DATA/rofi"
+    "$DATA/themes"
+    "$STATE/hyde"
+    "$BIN/hyde-shell"
+    "$BIN/hydectl"
     .gtkrc-2.0
     .zshenv
     .zshrc
@@ -93,8 +138,8 @@ SNAPSHOT_PATHS=(
 # 639MB in ~/.local/state/hyde is two virtualenvs, while the part that matters
 # is a 236-byte staterc naming the active theme.
 SNAPSHOT_EXCLUDES=(
-    /.local/state/hyde/python_env
-    /.local/state/hyde/pip_env
+    "/$STATE/hyde/python_env"
+    "/$STATE/hyde/pip_env"
 )
 
 # -----------------------------------------------------------------------------
