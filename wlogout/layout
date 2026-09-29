@@ -1,6 +1,6 @@
 {
     "label": "lock",
-    "action": "hyprlock -c $HOME/.dotfiles/os/linux/desktop/hyprlock.conf",
+    "action": "$HOME/.config/hypr/scripts/lock.sh",
     "text": "Lock",
     "keybind": "l"
 }
@@ -12,7 +12,7 @@
 }
 {
     "label": "suspend",
-    "action": "hyprlock -c $HOME/.dotfiles/os/linux/desktop/hyprlock.conf & disown && systemctl suspend",
+    "action": "systemctl suspend",
     "text": "Suspend",
     "keybind": "u"
 }
