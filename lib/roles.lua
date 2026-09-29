@@ -78,10 +78,14 @@ local function holder(role)
     return provider(name)
 end
 
---- A dispatcher for hl.bind that invokes whatever currently fills the role.
+--- The command that invokes whatever currently fills a role.
+---
+--- Separate from action() because a shell caller wants the string, not a
+--- dispatcher -- quickshell/scripts/lock.sh asks for this so that hypridle and
+--- the bar's power menu both reach whichever lock screen is active.
 --- @param role string
---- @return table dispatcher
-function M.action(role)
+--- @return string
+function M.action_command(role)
     local p = holder(role)
     local cmd = p.actions and p.actions[role]
 
@@ -89,7 +93,14 @@ function M.action(role)
         error("provider '" .. p.name .. "' fills '" .. role .. "' but offers no action for it")
     end
 
-    return hl.dsp.exec_cmd(cmd)
+    return cmd
+end
+
+--- A dispatcher for hl.bind that invokes whatever currently fills the role.
+--- @param role string
+--- @return table dispatcher
+function M.action(role)
+    return hl.dsp.exec_cmd(M.action_command(role))
 end
 
 --- Every active provider, each once, in a stable order.
