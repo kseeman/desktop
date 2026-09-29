@@ -213,8 +213,10 @@ hl.window_rule({
 -- today, and a namespace that no longer exists is simply a rule that never
 -- matches -- which is why the swaync and logout entries are left alone rather
 -- than pruned as each is replaced.
+-- Deliberately not "pill". The bar is drawn with its own translucency and
+-- upstream blurs nothing behind it; the rule only named this namespace because
+-- it previously named rofi and was repointed when rofi was dropped.
 for _, namespace in ipairs({
-    "pill",
     "notifications",
     "swaync-notification-window",
     "swaync-control-center",

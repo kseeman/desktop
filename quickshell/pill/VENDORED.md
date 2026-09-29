@@ -18,9 +18,21 @@ design is the reason it is here and the design is expected to drift.
 The commit above is recorded only so a future diff against upstream is possible.
 Nothing depends on it, and nothing here needs to stay in step with it.
 
-## What is ours
+## Local changes
 
-Nothing in this directory. The seam is elsewhere:
+Kept short on purpose: every entry here is a line that has to be re-applied by
+hand if this is ever re-copied from upstream.
+
+  - `Pill.qml` — the body's drop shadow is off (`layer.enabled: false` where
+    upstream has `!pill.morphing` and a `MultiEffect`). Upstream draws a
+    0.7-blur shadow at 50% black offset 3px down, which reads as a halo pooling
+    under the bar. Disabling the layer rather than only `shadowEnabled` also
+    drops the offscreen buffer, which by upstream's own comment is the top
+    per-frame cost of a morph.
+
+## What else is ours
+
+Nothing else in this directory. The seam is elsewhere:
 
   - colours arrive as `$XDG_CACHE_HOME/ricelin/colors.json`, which `Dyn.qml`
     watches and hot-reloads. That file is generated from this repo's palette,

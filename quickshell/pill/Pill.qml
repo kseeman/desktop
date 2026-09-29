@@ -718,13 +718,17 @@ Item {
             GradientStop { position: 1.0; color: Qt.alpha(Theme.cardBot, Flags.pillOpacity) }
         }
 
-        layer.enabled: !pill.morphing
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, Theme.shadowOpacity)
-            shadowBlur: 0.7
-            shadowVerticalOffset: 3 * pill.s
-        }
+        // LOCAL CHANGE (see VENDORED.md): the drop shadow is off.
+        //
+        // Upstream draws a 0.7-blur shadow at 50% black, offset 3px down, which
+        // reads as a soft halo pooling under the pill. Disabling the layer
+        // rather than just shadowEnabled also drops the offscreen buffer it
+        // needed -- by upstream's own comment above, re-rendering that buffer at
+        // every size step is the top per-frame cost of a morph, which is why
+        // `morphing` exists to switch it off mid-flight. With no shadow to
+        // draw, that cost is gone in both states and `morphing` simply has one
+        // consumer fewer.
+        layer.enabled: false
 
         Rectangle {
             anchors.top: parent.top
