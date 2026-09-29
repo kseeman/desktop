@@ -33,6 +33,7 @@ require("config.general")
 require("config.input")
 require("config.decoration")
 require("config.animations")
+require("config.misc")
 require("config.rules")
 require("config.workspaces")
 

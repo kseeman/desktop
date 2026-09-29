@@ -9,6 +9,11 @@ hl.config({
         resize_on_border = true,
         layout = "dwindle",
 
+        -- Floating windows snap to each other and to edges.
+        snap = {
+            enabled = true,
+        },
+
         col = {
             -- The focused window is the only thing wearing the accent, which
             -- is what makes it findable across two monitors without needing a
@@ -20,5 +25,9 @@ hl.config({
 
     dwindle = {
         preserve_split = true,
+    },
+
+    master = {
+        new_status = "master",
     },
 })
