@@ -46,6 +46,10 @@ current() {
     lua_eval 'print(require("lib.rice").name)'
 }
 
+wallpaper_of() {
+    lua_eval 'print(require("lib.rice").wallpaper or "")'
+}
+
 start_commands() {
     lua_eval 'for _, c in ipairs(require("lib.roles").start_commands()) do print(c) end'
 }
@@ -97,6 +101,21 @@ switch() {
     echo "==> $name"
 
     lua "$DESKTOP_DIR/render-theme.lua" --verbose
+
+    # Only when the rice names one. A rice that does not is not asking for the
+    # wallpaper to be cleared -- it simply has no opinion, and whatever is up
+    # stays up.
+    local wallpaper
+    wallpaper="$(wallpaper_of)"
+
+    if [[ -n "$wallpaper" ]]; then
+        if [[ -f "$wallpaper" ]]; then
+            "$DESKTOP_DIR/quickshell/scripts/wallpaper.sh" set "$wallpaper" \
+                && echo "wallpaper -> $wallpaper"
+        else
+            echo "rice names a wallpaper that is not there: $wallpaper" >&2
+        fi
+    fi
 
     # Only when there is a session to reload. Running this from a TTY or over
     # SSH should still switch the state and regenerate the files.

@@ -117,6 +117,27 @@ M.providers = definition.providers or {}
 --- Non-colour knobs -- gaps, rounding, blur, motion. Partial in the same way.
 M.look = definition.look or {}
 
+--- The wallpaper this rice wants, as an absolute path, or nil.
+---
+--- Resolved here rather than left to the caller, because a rice may name one
+--- of two quite different things: a file it ships, relative to its own
+--- directory, or one on this machine given as an absolute or ~ path. Shipping
+--- one keeps a look self-contained; naming a machine-local one keeps large or
+--- personal images out of a public repo.
+M.wallpaper = nil
+
+if type(definition.wallpaper) == "string" and definition.wallpaper ~= "" then
+    local w = definition.wallpaper
+
+    if w:sub(1, 1) == "~" then
+        M.wallpaper = (os.getenv("HOME") or "") .. w:sub(2)
+    elseif w:sub(1, 1) == "/" then
+        M.wallpaper = w
+    else
+        M.wallpaper = M.dir .. M.name .. "/" .. w
+    end
+end
+
 --- One line for a listing.
 M.description = definition.description or ""
 
