@@ -47,9 +47,15 @@ local RESIZE = {
 for _, d in ipairs(DIRECTIONS) do
     local delta = RESIZE[d.dir]
 
+    -- relative is what makes these a nudge rather than a size. Without it the
+    -- pair is read as an absolute width and height, so "grow 30 wider" asks
+    -- for a window 30 by 0 and the dispatcher refuses with "Invalid size".
+    --
+    -- The bindings were dead until the keysym fix, so this had never once run:
+    -- a wrong call sitting behind a key that could not be pressed.
     hl.bind(
         mod .. " + SHIFT + " .. d.key,
-        hl.dsp.window.resize({ x = delta[1], y = delta[2] }),
+        hl.dsp.window.resize({ x = delta[1], y = delta[2], relative = true }),
         { desc = "resize " .. d.dir, repeating = true }
     )
 end
