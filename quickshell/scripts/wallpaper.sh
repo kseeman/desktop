@@ -154,6 +154,83 @@ cmd_resolve() {
 }
 
 # -----------------------------------------------------------------------------
+# Working around awww's fit
+# -----------------------------------------------------------------------------
+#
+# awww 0.12.1 ignores --resize fit when the image width exactly equals the
+# output width, and crops instead. Measured against this 5120x1440 panel:
+# 5120x2880 and 5120x2160 crop, while 5000x2880, 5000x2812 and 6000x3375 fit.
+# So it is width equality -- scale factors of 1.024 and 0.853 both work and
+# 1.000 does not -- and neither the transition nor the fill colour is involved.
+#
+# It bites exactly the wallpapers cut to a screen's own width, which is the
+# collection an ultrawide accumulates, so it is worth working around rather
+# than waiting on.
+#
+# The workaround is to do awww's job for it: render the image into a frame the
+# size of the output, padded, and hand that over with --resize no. There is no
+# flag that avoids this -- the bug is in the resize path itself.
+#
+# Only for the affected outputs, and only in fit mode. Everything else takes
+# the unchanged single awww call below, so the common wallpaper pays nothing.
+
+RENDER_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/wallpaper"
+
+# Name, width and height of every output awww knows about.
+#
+#   : DP-1: 5120x1440, scale: 1, currently displaying: image: /path
+#
+# Asking awww rather than hyprctl keeps this working with no compositor
+# connection, which is also how ensure_daemon leaves things on first run.
+#
+# The scale field is read past. Every output here is scale 1, so whether awww
+# reports logical or physical pixels for a scaled one is untested -- on a HiDPI
+# output the frame could come out at half size. Worth checking before trusting
+# this on a laptop.
+awww_outputs() {
+    awww query | sed -n 's/^: \([^:]*\): \([0-9]\+\)x\([0-9]\+\),.*/\1 \2 \3/p'
+}
+
+# Does this image hit the bug on an output of this width?
+#
+# `[0]` takes the first frame: identify prints one line per frame otherwise, and
+# an animated gif would yield a width with a newline in it.
+hits_fit_bug() {
+    local pic="$1" output_width="$2" image_width
+
+    [[ "$RESIZE" == "fit" ]] || return 1
+    command -v magick > /dev/null || return 1
+
+    image_width="$(magick identify -format '%w' "${pic}[0]" 2> /dev/null)" || return 1
+
+    [[ "$image_width" == "$output_width" ]]
+}
+
+# Render `pic` into a `w`x`h` frame: scaled to fit, centred, padded with `fill`.
+#
+# -resize without `!` keeps the aspect ratio and fits inside the box, then
+# -extent pads it out to exactly the box -- which is what fit means, done here
+# because awww will not do it.
+#
+# The alpha is removed onto the same colour, so a transparent PNG pads and fills
+# identically instead of showing whatever awww puts behind it.
+#
+# One file per output rather than a keyed cache: re-rendering costs a few
+# hundred milliseconds and only happens for affected wallpapers, while a keyed
+# cache of 5120x1440 frames would need pruning to stay honest.
+prerender() {
+    local pic="$1" w="$2" h="$3" fill="$4" out="$5"
+
+    mkdir -p "$RENDER_DIR"
+
+    magick "${pic}[0]" \
+        -resize "${w}x${h}" \
+        -background "#${fill}" -alpha remove -alpha off \
+        -gravity center -extent "${w}x${h}" \
+        "$out"
+}
+
+# -----------------------------------------------------------------------------
 # Setting
 # -----------------------------------------------------------------------------
 
@@ -177,6 +254,26 @@ ensure_daemon() {
 
     echo "awww-daemon did not come up" >&2
     return 1
+}
+
+# One awww invocation. `mode` is separate from $RESIZE because a pre-rendered
+# frame is already the size of its output and must not be resized again.
+awww_apply() {
+    local pic="$1" mode="$2" fill="$3" output="${4:-}"
+    local -a args=(img)
+
+    [[ -n "$output" ]] && args+=(--outputs "$output")
+
+    args+=(--resize "$mode" --fill-color "$fill")
+
+    # Only meaningful while cropping, and awww rejects it otherwise.
+    [[ "$mode" == "crop" ]] && args+=(--crop-gravity "$GRAVITY")
+
+    # A transition rather than a cut, matched to the desktop's own motion: the
+    # bar and the compositor both settle over roughly 400ms.
+    args+=(--transition-type fade --transition-duration 0.4 --transition-fps 60)
+
+    awww "${args[@]}" "$pic"
 }
 
 cmd_set() {
@@ -208,19 +305,50 @@ cmd_set() {
         "$SCRIPTS_DIR/generate-palette.sh" "$pic" || true
     fi
 
-    local -a args=(img)
-    [[ -n "$output" ]] && args+=(--outputs "$output")
+    local fill
+    fill="$(fill_color)"
 
-    args+=(--resize "$RESIZE" --fill-color "$(fill_color)")
+    # Which outputs need awww's fit doing for them. Each entry is
+    # "<output> <rendered path>"; `plain` collects the rest.
+    local -a rendered=() plain=()
+    local name ow oh frame entry
 
-    # Only meaningful while cropping, and awww rejects it otherwise.
-    [[ "$RESIZE" == "crop" ]] && args+=(--crop-gravity "$GRAVITY")
+    while read -r name ow oh; do
+        [[ -n "$name" ]] || continue
+        [[ -z "$output" || "$name" == "$output" ]] || continue
 
-    # A transition rather than a cut, matched to the desktop's own motion: the
-    # bar and the compositor both settle over roughly 400ms.
-    args+=(--transition-type fade --transition-duration 0.4 --transition-fps 60)
+        if hits_fit_bug "$pic" "$ow"; then
+            frame="$RENDER_DIR/$name.png"
 
-    awww "${args[@]}" "$pic"
+            # A render that fails is not worth failing the wallpaper over: fall
+            # through to awww, which crops. Wrong, but a wallpaper.
+            if prerender "$pic" "$ow" "$oh" "$fill" "$frame" 2> /dev/null; then
+                rendered+=("$name $frame")
+            else
+                echo "could not pre-render for $name; awww will crop it" >&2
+                plain+=("$name")
+            fi
+        else
+            plain+=("$name")
+        fi
+    done < <(awww_outputs)
+
+    # Nothing affected: the original single call, setting every output at once.
+    # Naming outputs individually would work too, but this keeps the untouched
+    # path byte-for-byte what it was.
+    if [[ ${#rendered[@]} -eq 0 ]]; then
+        awww_apply "$pic" "$RESIZE" "$fill" "$output"
+    else
+        # Each affected output gets its own frame, so two screens of different
+        # shapes each get their own padding rather than sharing one.
+        [[ ${#plain[@]} -eq 0 ]] || for name in "${plain[@]}"; do
+            awww_apply "$pic" "$RESIZE" "$fill" "$name"
+        done
+
+        for entry in "${rendered[@]}"; do
+            awww_apply "${entry#* }" no "$fill" "${entry%% *}"
+        done
+    fi
 
     # Written last: the bar reads this back to mark which wallpaper is current,
     # so recording one that failed to apply would show the wrong thing.
