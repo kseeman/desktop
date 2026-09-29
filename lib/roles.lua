@@ -86,25 +86,57 @@ function M.action(role)
     return hl.dsp.exec_cmd(cmd)
 end
 
---- Start commands for every active provider that is long-running, each once.
---- @return string[]
-function M.start_commands()
+--- Every active provider, each once, in a stable order.
+--- @return table[]
+local function active_providers()
     local seen = {}
     local out = {}
 
     -- Sorted so the order does not follow pairs() iteration, which would make
     -- the autostart sequence change between runs for no reason.
-    local roles = {}
+    local names = {}
     for role in pairs(ACTIVE) do
-        roles[#roles + 1] = role
+        names[#names + 1] = role
     end
-    table.sort(roles)
+    table.sort(names)
 
-    for _, role in ipairs(roles) do
+    for _, role in ipairs(names) do
         local p = holder(role)
 
-        if p.start and not seen[p.name] then
+        if not seen[p.name] then
             seen[p.name] = true
+            out[#out + 1] = p
+        end
+    end
+
+    return out
+end
+
+--- Templates declared by active providers, for render-theme.lua.
+---
+--- Only the active ones: a provider nothing uses should not have its config
+--- regenerated, and an inactive one may reference palette names that no longer
+--- exist.
+--- @return table[] each { src = string, out = string }
+function M.templates()
+    local out = {}
+
+    for _, p in ipairs(active_providers()) do
+        for _, t in ipairs(p.templates or {}) do
+            out[#out + 1] = t
+        end
+    end
+
+    return out
+end
+
+--- Start commands for every active provider that is long-running, each once.
+--- @return string[]
+function M.start_commands()
+    local out = {}
+
+    for _, p in ipairs(active_providers()) do
+        if p.start then
             out[#out + 1] = p.start
         end
     end

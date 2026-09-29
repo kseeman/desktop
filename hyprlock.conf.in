@@ -15,17 +15,24 @@
 # Colours
 # -----------------------------------------------------------------------------
 
-# Mirrors lib/palette.lua. hyprlock reads hyprlang rather than Lua, so the
-# values are repeated here in the one block P6 will generate -- the same
-# arrangement waybar and rofi get, and the reason no colour appears below this
-# point except by name.
-$root = rgba(120D1DFF)
-$base = rgba(1F1829FF)
-$overlay = rgba(453852FF)
-$muted = rgba(595162FF)
-$accent = rgba(6E5E8CFF)
-$fg = rgba(B5B0B1FF)
-$fg_dim = rgba(8F7D86FF)
+# Generated from lib/palette.lua by render-theme.lua. hyprlock reads hyprlang
+# rather than Lua, so the values cannot be required -- they are substituted into
+# this one block instead, which is why no colour appears below this point except
+# by name.
+#
+# The ":bare" form strips the leading # from a palette value, because hyprlang
+# wants rgba(RRGGBBAA) rather than CSS hex. The alpha stays in the template: it
+# is a property of this file, not of the palette.
+#
+# Substitution applies to comments too, so a comment cannot spell a token out
+# literally -- it would be replaced, or fail the render if the name is not real.
+$root = rgba(@root:bare@FF)
+$base = rgba(@base:bare@FF)
+$overlay = rgba(@overlay:bare@FF)
+$muted = rgba(@muted:bare@FF)
+$accent = rgba(@accent:bare@FF)
+$fg = rgba(@fg:bare@FF)
+$fg_dim = rgba(@fg_dim:bare@FF)
 
 general {
     hide_cursor = true
