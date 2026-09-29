@@ -1,34 +1,16 @@
 -- Locking and leaving.
-local paths = require("lib.paths")
+--
+-- Both name roles rather than programs. The lock command and the logout menu's
+-- arguments live in their providers; lib/roles.lua says which provider holds
+-- each. Only the last binding names a behaviour rather than a component,
+-- because ending the session is the compositor's own job.
+local roles = require("lib.roles")
 
 local mod = "SUPER"
 
--- hyde-shell lock-session wrapped hyprlock with bookkeeping this desktop does
--- not have. hyprlock is what it ran.
---
--- -c is not optional: bare `hyprlock` reads ~/.config/hypr/hyprlock.conf, which
--- is HyDE's and sources files that disappear with it. A lock screen built from
--- a missing config is the one failure that needs a TTY to get out of.
-local LOCK = "hyprlock -c " .. paths.desktop_file("hyprlock.conf")
+hl.bind(mod .. " + L", roles.action("lock"), { desc = "lock screen" })
 
-hl.bind(mod .. " + L", hl.dsp.exec_cmd(LOCK), { desc = "lock screen" })
-
--- wlogout is the menu hyde-shell logoutlaunch opened. Its layout and styling
--- come from this repo: the shipped ~/.config/wlogout/layout_1 calls
--- `hyde-shell logout` and `lockscreen.sh`, so three of its six buttons stop
--- working when HyDE goes -- a menu that opens and does nothing.
-local DESKTOP = paths.desktop
-
-hl.bind(
-    "CONTROL + ALT + Delete",
-    -- -b 5 puts all five buttons on one row. wlogout defaults to three per
-    -- row, which for five buttons leaves an empty cell in the second row that
-    -- still takes the button styling -- a blank button that does nothing.
-    hl.dsp.exec_cmd(
-        "wlogout -b 5 -l " .. DESKTOP .. "wlogout/layout -C " .. DESKTOP .. "wlogout/style.css"
-    ),
-    { desc = "logout menu" }
-)
+hl.bind("CONTROL + ALT + Delete", roles.action("power"), { desc = "logout menu" })
 
 -- Ends the session outright, with no menu in the way.
 hl.bind(mod .. " + Delete", hl.dsp.exit(), { desc = "exit hyprland" })

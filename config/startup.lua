@@ -26,6 +26,7 @@
 --   waybar, wallpaper  the pill replaces both: it is the bar, and it sets the
 --                      wallpaper itself from Flags.wallpaperDir.
 local paths = require("lib.paths")
+local roles = require("lib.roles")
 
 local DESKTOP = paths.desktop
 
@@ -58,13 +59,19 @@ hl.on("hyprland.start", function()
     -- window over whatever is already there.
     hl.exec_cmd("1password --silent")
 
-    -- The bar. It is also the notification server, the wallpaper setter, the
-    -- launcher's clipboard view and the power menu, which is why so little else
-    -- is started here.
+    -- Whatever currently fills the desktop's roles -- the bar, the launcher,
+    -- notifications, the wallpaper. One command per provider rather than per
+    -- role, since the pill alone holds eight of them.
     --
-    -- Its colours come from $XDG_CACHE_HOME/ricelin/colors.json, written by
-    -- quickshell/apply-palette.sh from lib/palette.lua. The pill watches that
-    -- file, so a theme change repaints it without a restart and nothing here
-    -- needs to know about colour.
-    hl.exec_cmd("quickshell -p " .. DESKTOP .. "quickshell/pill")
+    -- Nothing here names a component, so swapping one is an edit in
+    -- lib/roles.lua and this loop keeps working. Providers that are run on
+    -- demand rather than kept alive, like the lock screen, declare no start
+    -- command and are simply absent from this list.
+    --
+    -- Colours reach them through generated files rather than through here:
+    -- quickshell/apply-palette.sh writes the pill's from lib/palette.lua, and
+    -- the pill watches it, so a theme change repaints without a restart.
+    for _, command in ipairs(roles.start_commands()) do
+        hl.exec_cmd(command)
+    end
 end)
