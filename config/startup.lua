@@ -51,9 +51,14 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
 
-    -- Idle locking, from this repo's config rather than the HyDE one that calls
-    -- hyde-shell.
-    hl.exec_cmd("hypridle -c " .. DESKTOP .. "hypridle.conf")
+    -- Idle locking, through the packaged user unit rather than the binary.
+    --
+    -- The unit runs hypridle with no -c, so it reads the default path --
+    -- ~/.config/hypr/hypridle.conf, seeded from this repo by the installer.
+    -- That is also where the bar's idle settings surface writes, and the unit
+    -- is what it restarts afterwards, so its timeouts actually take effect
+    -- instead of being written to a file nothing read.
+    hl.exec_cmd("systemctl --user start hypridle.service")
 
     -- Blue light filter.
     hl.exec_cmd("hyprsunset")

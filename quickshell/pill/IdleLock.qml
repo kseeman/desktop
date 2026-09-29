@@ -50,10 +50,17 @@ SettingsSurface {
      * seconds.
      */
     function buildConf() {
+        // LOCAL CHANGE (see VENDORED.md): unlock_cmd and the two inhibit
+        // settings are added, because this function rewrites the whole file
+        // and upstream's version omits them -- so changing an idle timeout
+        // here would silently drop them from a config that had them.
         var out = "general {\n"
             + "    lock_cmd = " + root.lockScript + "\n"
+            + "    unlock_cmd = pkill -USR1 hyprlock\n"
             + "    before_sleep_cmd = loginctl lock-session\n"
             + "    after_sleep_cmd = hyprctl dispatch dpms on\n"
+            + "    ignore_dbus_inhibit = false\n"
+            + "    ignore_systemd_inhibit = false\n"
             + "}\n";
 
         if (Flags.idleLockMin > 0)

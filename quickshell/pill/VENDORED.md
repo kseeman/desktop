@@ -23,6 +23,11 @@ Nothing depends on it, and nothing here needs to stay in step with it.
 Kept short on purpose: every entry here is a line that has to be re-applied by
 hand if this is ever re-copied from upstream.
 
+  - `IdleLock.qml` — `buildConf()` also writes `unlock_cmd` and the two
+    `ignore_*_inhibit` settings. It rewrites the whole file, and upstream's
+    version omits them, so changing an idle timeout would silently drop them
+    from a config that had them.
+
   - `Singletons/Cliphist.qml` — `listProc.onExited` takes the exit code from
     the signal, `(exitCode, exitStatus) => …`, instead of reading
     `listProc.exitCode` off the object.
