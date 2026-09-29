@@ -31,6 +31,15 @@ local roles = require("lib.roles")
 local DESKTOP = paths.desktop
 
 hl.on("hyprland.start", function()
+    -- Generate the configs that carry colours, before anything that reads one.
+    -- The installer does this too; repeating it at login is what makes a
+    -- palette edit reach every consumer without running the installer, and it
+    -- costs milliseconds.
+    --
+    -- First deliberately: hypridle is started below and locks on a timer, and
+    -- the lock screen is one of the generated files.
+    hl.exec_cmd("lua " .. DESKTOP .. "render-theme.lua")
+
     -- Authentication prompts. Without an agent, anything asking for a password
     -- fails silently rather than asking.
     hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")

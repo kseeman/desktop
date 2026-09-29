@@ -89,6 +89,13 @@ EXEC_PATTERN='hl\.exec_cmd|hl\.dispatch|os\.execute|io\.popen'
 exec_warnings=0
 
 while IFS= read -r module; do
+    # A shebang means a standalone program that happens to be written in Lua --
+    # render-theme.lua is run by the installer and by a startup exec, never
+    # required by the config. The compositor never loads it, so an os.execute
+    # inside it is not something --verify-config can trigger. Config modules
+    # never carry one, so this separates the two without a list to maintain.
+    head -n 1 "$module" 2> /dev/null | grep -q '^#!' && continue
+
     grep -qE "$EXEC_PATTERN" "$module" 2> /dev/null || continue
     grep -qE 'hl\.on\("hyprland\.start"|hl\.bind\(' "$module" 2> /dev/null && continue
 

@@ -20,6 +20,16 @@ local here = debug.getinfo(1, "S").source:match("^@(.*/)") or "./"
 
 M.desktop = here:gsub("lib/$", "")
 
+-- Where render-theme.lua writes the configs it generates from the palette.
+--
+-- A cache rather than config, because every file under it is derived and
+-- rebuilt on demand: losing it costs one render. It is also why nothing
+-- generated is tracked -- a hand-edit there is overwritten by the next theme
+-- change, which is the intended contract.
+local cache = os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")
+
+M.theme = cache .. "/dotfiles/theme/"
+
 --- Absolute path to something inside the desktop directory.
 --- @param rel string path relative to os/linux/desktop
 --- @return string
