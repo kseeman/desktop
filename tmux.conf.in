@@ -1,0 +1,37 @@
+# -----------------------------------------------------------------------------
+# tmux colours
+# -----------------------------------------------------------------------------
+#
+# Generated from lib/palette.lua by render-theme.lua, and sourced by
+# tmux/tmux.conf. tmux has no way to read Lua, so the values are substituted
+# here -- the same arrangement hyprlock and wlogout get.
+#
+# **Styles only.** Formats and layout stay in tmux.conf, so the bar can be
+# recoloured without touching its structure and restyled without touching its
+# content. That split is inherited from the wallbash template this replaces and
+# is worth keeping.
+#
+# tmux is not a swappable component the way a launcher is, so this is rendered
+# from render-theme.lua's base list rather than declared by a provider.
+
+set -g status-style "bg=@base@,fg=@fg@"
+set -g status-left-style "bg=@accent@,fg=@fg_bright@,bold"
+set -g status-right-style "bg=@base@,fg=@fg_dim@"
+
+setw -g window-status-style "bg=@base@,fg=@fg_dim@"
+setw -g window-status-current-style "bg=@raised@,fg=@fg_bright@,bold"
+setw -g window-status-activity-style "bg=@base@,fg=@accent@"
+
+set -g pane-border-style "fg=@muted@"
+set -g pane-active-border-style "fg=@accent@"
+
+set -g message-style "bg=@overlay@,fg=@fg_bright@,bold"
+set -g message-command-style "bg=@overlay@,fg=@fg@"
+
+set -g mode-style "bg=@accent_deep@,fg=@fg_bright@"
+
+# Panes keep the terminal's own foreground rather than being tinted, so text in
+# an inactive pane stays as readable as the active one. Only the borders say
+# which is which.
+set -g window-style "fg=@fg@"
+set -g window-active-style "fg=@fg_bright@"
