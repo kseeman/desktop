@@ -74,8 +74,17 @@ resolve_dir() {
         dir="$(jq -r '.wallpaperDir // ""' "$FLAGS" 2> /dev/null || true)"
     fi
 
-    [[ -n "$dir" ]] || dir="$(cat "$DIR_STATE" 2> /dev/null || true)"
-    [[ -n "$dir" ]] || dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/wallpapers"
+    # A recorded directory is only worth having if it still exists. Without this
+    # check a rename can never heal: resolve keeps returning the old path, and
+    # since it creates what it names, reading it puts the empty directory back.
+    local recorded
+    recorded="$(cat "$DIR_STATE" 2> /dev/null || true)"
+    [[ -n "$recorded" && -d "$recorded" ]] && dir="$recorded"
+
+    # Capitalised to match the other XDG user directories -- xdg-user-dirs
+    # creates Pictures, Downloads and Documents that way, and Screenshots beside
+    # this one follows suit.
+    [[ -n "$dir" ]] || dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Wallpapers"
 
     printf '%s' "$dir"
 }
@@ -192,7 +201,16 @@ repaint() {
 }
 
 cmd_current() {
-    cat "$STATE" 2> /dev/null || true
+    local recorded
+    recorded="$(cat "$STATE" 2> /dev/null || true)"
+
+    # Same rule as the directory: a recorded path that no longer exists is not
+    # an answer. The bar reads this to mark which wallpaper is current, and
+    # naming a file that was moved or deleted would mark the wrong thing --
+    # or nothing, while looking like it knew.
+    [[ -n "$recorded" && -f "$recorded" ]] && printf '%s\n' "$recorded"
+
+    return 0
 }
 
 case "${1:-current}" in

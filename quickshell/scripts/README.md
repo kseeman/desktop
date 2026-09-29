@@ -32,7 +32,16 @@ displaced.
     `magick-policy/policy.xml` is a real security control, not configuration:
     clipboard bytes are untrusted input to ImageMagick, so it permits plain
     raster coders and turns off delegates, the MVG/MSL/PS/text family and
-    indirect `@file` reads, which are the historical RCE vectors. The script
+    indirect `@file` reads, which are the historical RCE vectors.
+
+    **Its four `resource` lines are a different thing from the rest**, and
+    worth separating when tuning. They bound *resources*; everything else
+    bounds what may *run*. Sized originally for clipboard images, they
+    silently dropped a 15360x8640 wallpaper — 132 megapixels needs about
+    530MB decoded, so ImageMagick refused with "cache resources exhausted"
+    and the picker showed one fewer image than the folder held. Now
+    1GiB/2GiB/4GiB/60s: a decompression bomb is still capped, at a size a
+    real 8K wallpaper fits inside, and nothing closing an RCE vector moved. The script
     points `MAGICK_CONFIGURE_PATH` at it relative to `$0`, so the directory has
     to travel with the script.
 
