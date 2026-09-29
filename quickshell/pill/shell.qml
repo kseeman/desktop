@@ -227,7 +227,9 @@ ShellRoot {
             required property var modelData
             readonly property real s: modelData ? (modelData.height / 1080) * Flags.uiScale : 1
             readonly property real topGap: 8 * Flags.topGap * s
-            readonly property real restHeight: 38 * s
+            // LOCAL CHANGE (see VENDORED.md): 38 upstream. Must stay equal to
+            // `restH` in Pill.qml, which is what actually gets drawn.
+            readonly property real restHeight: 28 * s
 
             /** Trimming the reserved band below the pill's bottom lets windows climb, so App gap sets the pill-to-window air without touching the desktop gaps_out. */
             readonly property real reservedH: Math.max(0, restHeight + topGap - 12 * (1 - Flags.appGap) * s)

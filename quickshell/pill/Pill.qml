@@ -156,7 +156,10 @@ Item {
     readonly property bool quickCounting: quickHere && ScreenRec.counting && !recorderOpen
 
     readonly property real restW: 160 * s
-    readonly property real restH: 38 * s
+    // LOCAL CHANGE (see VENDORED.md): 38 upstream. Must stay equal to
+    // `restHeight` in shell.qml, which reserves this height from tiled windows
+    // -- a mismatch leaves the bar and its exclusive zone disagreeing.
+    readonly property real restH: 28 * s
     readonly property real hoverPad: 20 * s
     readonly property real hoverW: hoverRow.implicitWidth + 2 * hoverPad
     readonly property real hoverH: 58 * s

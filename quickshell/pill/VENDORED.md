@@ -23,6 +23,11 @@ Nothing depends on it, and nothing here needs to stay in step with it.
 Kept short on purpose: every entry here is a line that has to be re-applied by
 hand if this is ever re-copied from upstream.
 
+  - `Pill.qml` + `shell.qml` — the rest height is 28 where upstream has 38.
+    The number is written in both files (`restH` draws it, `restHeight`
+    reserves it from tiled windows) and they have to agree, so each carries a
+    comment pointing at the other.
+
   - `Pill.qml` — the body's drop shadow is off (`layer.enabled: false` where
     upstream has `!pill.morphing` and a `MultiEffect`). Upstream draws a
     0.7-blur shadow at 50% black offset 3px down, which reads as a halo pooling
