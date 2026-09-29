@@ -34,3 +34,4 @@ hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, desc = "r
 
 require("bindings.launchers")
 require("bindings.screenshot")
+require("bindings.media")
