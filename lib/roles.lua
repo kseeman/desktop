@@ -21,6 +21,8 @@
 --
 -- One provider may fill several roles -- the pill fills nine -- so starting is
 -- deduplicated by provider, not by role.
+local rice = require("lib.rice")
+
 local M = {}
 
 -- Which provider holds each role.
@@ -28,7 +30,7 @@ local M = {}
 -- This table is what a rice will eventually set, rather than being edited by
 -- hand. Until then it is the whole configuration: every value is a filename in
 -- providers/.
-local ACTIVE = {
+local DEFAULT = {
     bar = "pill",
     launcher = "pill",
     clipboard = "pill",
@@ -43,6 +45,10 @@ local ACTIVE = {
     -- The pill offers one too; this is what the key has always opened.
     power = "wlogout",
 }
+
+-- The active rice overrides whichever roles it names and leaves the rest, so a
+-- rice that only changes the launcher says only that.
+local ACTIVE = setmetatable(rice.providers, { __index = DEFAULT })
 
 local cache = {}
 
@@ -94,8 +100,11 @@ local function active_providers()
 
     -- Sorted so the order does not follow pairs() iteration, which would make
     -- the autostart sequence change between runs for no reason.
+    -- Iterating DEFAULT rather than ACTIVE: ACTIVE inherits through a
+    -- metatable, and pairs() does not see inherited keys -- so a rice naming
+    -- only one role would otherwise shrink the desktop to that one role.
     local names = {}
-    for role in pairs(ACTIVE) do
+    for role in pairs(DEFAULT) do
         names[#names + 1] = role
     end
     table.sort(names)
