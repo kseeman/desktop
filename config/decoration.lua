@@ -1,10 +1,11 @@
 -- Rounding, blur and shadow. P6 replaces the colours here with generated ones;
 -- structure stays in this file so regenerating a palette never rewrites layout.
 local palette = require("lib.palette")
+local look = require("lib.look")
 
 hl.config({
     decoration = {
-        rounding = 10,
+        rounding = look.rounding,
 
         -- Unfocused windows recede rather than just losing their border. This
         -- is most of why the desktop reads as focused-on-one-thing, and it is
@@ -18,7 +19,7 @@ hl.config({
         dim_special = 0.3,
 
         blur = {
-            enabled = true,
+            enabled = look.blur,
             size = 4,
             passes = 2,
             ignore_opacity = true,
