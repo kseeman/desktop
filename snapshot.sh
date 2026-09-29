@@ -96,9 +96,18 @@ LABEL=""
 # ~/.local/share/icons (6.7GB) is left out: it is an installed asset, replaced
 # by reinstalling its package, and nothing here modifies it.
 #
-# ~/.local/lib has no XDG variable -- the spec defines no lib directory -- so it
-# stays relative to $HOME, as do the three legacy dotfiles at the end, which
-# predate the spec and are read from $HOME by the programs that own them.
+# ~/.userconfig is the most irreplaceable thing in this list. It is where this
+# repo deliberately keeps what must not be tracked -- tmux profiles and layouts,
+# nvim per-project settings, zsh secrets and extensions, and hypr/local.lua with
+# this machine's monitor geometry and graphics settings. Everything else here
+# can be reinstalled from a package or recloned; this exists in exactly one
+# place. It holds secrets, which is not a reason to leave it out: the archive
+# already contains the shell history, and it lives outside the public repo.
+#
+# ~/.userconfig and ~/.local/lib have no XDG variable -- the spec defines no lib
+# directory, and ~/.userconfig is this repo's own convention -- so both stay
+# relative to $HOME, as do the three legacy dotfiles at the end, which predate
+# the spec and are read from $HOME by the programs that own them.
 SNAPSHOT_PATHS=(
     "$CONFIG/hypr"
     "$CONFIG/hyde"
@@ -128,6 +137,7 @@ SNAPSHOT_PATHS=(
     "$STATE/hyde"
     "$BIN/hyde-shell"
     "$BIN/hydectl"
+    .userconfig
     .gtkrc-2.0
     .zshenv
     .zshrc
