@@ -13,8 +13,14 @@ return {
     -- -b 5 puts all five buttons on one row. The default of three per row
     -- leaves an empty cell that still takes the button styling: a blank button
     -- that does nothing.
+    -- The layout is static and read from the repo; the stylesheet is generated,
+    -- so it comes from the theme cache.
     actions = {
         power = "wlogout -b 5 -l " .. paths.desktop_file("wlogout/layout")
-            .. " -C " .. paths.desktop_file("wlogout/style.css"),
+            .. " -C " .. paths.theme .. "wlogout.css",
+    },
+
+    templates = {
+        { src = "wlogout/style.css.in", out = "$THEME_DIR/wlogout.css" },
     },
 }

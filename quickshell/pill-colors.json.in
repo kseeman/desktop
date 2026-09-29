@@ -1,0 +1,19 @@
+{
+  "surface": "@base@",
+  "surface_container": "@raised@",
+  "surface_container_low": "@root@",
+  "surface_container_high": "@overlay@",
+  "surface_container_highest": "@muted@",
+  "primary": "@accent@",
+  "primary_container": "@accent_deep@",
+  "on_primary_container": "@fg_bright@",
+  "outline": "@muted@",
+  "outline_variant": "@raised@",
+  "cream": "@fg@",
+  "bright": "@fg_bright@",
+  "subtle": "@fg_muted@",
+  "dim": "@fg_dim@",
+  "faint": "@muted@",
+  "icon_dim": "@fg_muted@",
+  "tick_rest": "@fg_muted@"
+}

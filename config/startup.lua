@@ -77,9 +77,9 @@ hl.on("hyprland.start", function()
     -- demand rather than kept alive, like the lock screen, declare no start
     -- command and are simply absent from this list.
     --
-    -- Colours reach them through generated files rather than through here:
-    -- quickshell/apply-palette.sh writes the pill's from lib/palette.lua, and
-    -- the pill watches it, so a theme change repaints without a restart.
+    -- Colours reach them through the files render-theme.lua generated above,
+    -- not from here. The pill watches its own, so a theme change repaints it
+    -- without a restart.
     for _, command in ipairs(roles.start_commands()) do
         hl.exec_cmd(command)
     end
