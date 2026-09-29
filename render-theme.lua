@@ -139,9 +139,30 @@ end
 -- Render
 -- -----------------------------------------------------------------------------
 
+-- Consumers that are not swappable components.
+--
+-- lib/roles.lua answers for anything a rice can swap -- a launcher, a lock
+-- screen. tmux is not one of those: it is always tmux, there is no role for it
+-- to fill and no provider to declare it. Rendering it from a role would mean
+-- inventing a component system for something that has exactly one
+-- implementation.
+local BASE = {
+    { src = "tmux.conf.in", out = "$THEME_DIR/tmux.conf" },
+}
+
+local templates = {}
+
+for _, t in ipairs(BASE) do
+    templates[#templates + 1] = t
+end
+
+for _, t in ipairs(roles.templates()) do
+    templates[#templates + 1] = t
+end
+
 local count = 0
 
-for _, template in ipairs(roles.templates()) do
+for _, template in ipairs(templates) do
     local src = paths.desktop_file(template.src)
     local out = expand(template.out)
 
