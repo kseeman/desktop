@@ -55,14 +55,46 @@ fi
 # Static check
 # -----------------------------------------------------------------------------
 
-# An exec at the start of a line is at the top level in any formatting this repo
-# uses, since anything nested is indented. Deliberately a warning: it is a
-# heuristic, and a false positive must not block a commit.
-if grep -nE '^\s{0,3}hl\.exec_cmd|^\s{0,3}os\.execute' "$CONFIG" > /dev/null 2>&1; then
-    echo "Warning: $CONFIG looks like it execs at the top level:"
-    grep -nE '^\s{0,3}hl\.exec_cmd|^\s{0,3}os\.execute' "$CONFIG" | sed 's/^/    /'
-    echo "    These run whenever the config is verified. Move them into"
-    echo "    hl.on(\"hyprland.start\", function() ... end)."
+# Which calls execute the moment the config is read, measured on 0.56.2:
+#
+#   hl.exec_cmd(...)                 runs
+#   os.execute(...) / io.popen(...)  runs
+#   hl.dispatch(hl.dsp.exec_cmd(..)) runs
+#   an exec in a function called at the top level    runs
+#   hl.dsp.exec_cmd(...) passed to hl.bind           does NOT -- it builds a
+#                                                    dispatcher, so bindings are
+#                                                    safe and must not be flagged
+#   anything inside hl.on("hyprland.start", ...)     does NOT
+#
+# The last two are why this is a per-file rule rather than a per-line one. An
+# exec indented inside a top-level `for` still runs, and an exec reached through
+# a function call cannot be spotted by grep at all -- so what is checked is
+# whether a file that execs has an hl.on("hyprland.start") to put them in.
+#
+# Note hl.dsp.exec_cmd does not contain the substring hl.exec_cmd, so the
+# pattern below passes over every binding without needing to exclude it.
+EXEC_PATTERN='hl\.exec_cmd|hl\.dispatch|os\.execute|io\.popen'
+
+# Modules too, not just the entry point: every exec in this desktop lives in
+# config/startup.lua, which a check that only read the file it was given would
+# never have looked at.
+exec_warnings=0
+
+while IFS= read -r module; do
+    grep -qE "$EXEC_PATTERN" "$module" 2> /dev/null || continue
+    grep -q 'hl\.on("hyprland\.start"' "$module" 2> /dev/null && continue
+
+    if [[ $exec_warnings -eq 0 ]]; then
+        echo "Warning: these run whenever the config is verified, not just at login:"
+    fi
+
+    grep -nE "$EXEC_PATTERN" "$module" | sed "s|^|    ${module#"$DESKTOP_DIR/"}:|"
+    exec_warnings=$((exec_warnings + 1))
+done < <(find "$(dirname "$CONFIG")" -name '*.lua' -type f 2> /dev/null | sort)
+
+if [[ $exec_warnings -gt 0 ]]; then
+    echo "    Move them inside hl.on(\"hyprland.start\", function() ... end),"
+    echo "    which is not run by --verify-config."
     echo ""
 fi
 
