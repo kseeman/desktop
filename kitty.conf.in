@@ -1,0 +1,38 @@
+# -----------------------------------------------------------------------------
+# kitty chrome
+# -----------------------------------------------------------------------------
+#
+# Generated from lib/palette.lua by render-theme.lua and included by
+# kitty/kitty.conf *after* its own theme.conf, so this wins on Linux while a
+# machine without the desktop keeps the tracked colours.
+#
+# **Only the chrome, deliberately.** The sixteen ANSI colours stay in
+# kitty/theme.conf and are not generated, because this palette is a single-hue
+# ramp: deriving red, green and yellow from it would give three shades of the
+# same violet, and terminal output that cannot be told apart. ANSI colours need
+# to be distinguishable from each other, which is a different job from matching
+# the desktop.
+#
+# matugen does emit a base16 set, so deriving those properly is possible later;
+# it is not the same as reading them off this ramp.
+
+background @root@
+foreground @fg@
+
+cursor @accent@
+cursor_text_color @root@
+
+selection_background @overlay@
+selection_foreground @fg_bright@
+
+# The frame around and between windows, which is the part that should agree
+# with the compositor's own borders.
+active_border_color @accent@
+inactive_border_color @muted@
+
+active_tab_background @accent@
+active_tab_foreground @fg_bright@
+inactive_tab_background @raised@
+inactive_tab_foreground @fg_dim@
+
+url_color @accent@
