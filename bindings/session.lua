@@ -19,7 +19,12 @@ local DESKTOP = os.getenv("HOME") .. "/.dotfiles/os/linux/desktop"
 
 hl.bind(
     "CONTROL + ALT + Delete",
-    hl.dsp.exec_cmd("wlogout -l " .. DESKTOP .. "/wlogout/layout -C " .. DESKTOP .. "/wlogout/style.css"),
+    -- -b 5 puts all five buttons on one row. wlogout defaults to three per
+    -- row, which for five buttons leaves an empty cell in the second row that
+    -- still takes the button styling -- a blank button that does nothing.
+    hl.dsp.exec_cmd(
+        "wlogout -b 5 -l " .. DESKTOP .. "/wlogout/layout -C " .. DESKTOP .. "/wlogout/style.css"
+    ),
     { desc = "logout menu" }
 )
 
