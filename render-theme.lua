@@ -148,7 +148,12 @@ end
 -- implementation.
 local BASE = {
     { src = "tmux.conf.in", out = "$THEME_DIR/tmux.conf" },
-    { src = "kitty.conf.in", out = "$THEME_DIR/kitty.conf" },
+    -- $HOME rather than $THEME_DIR, and that is kitty's constraint rather than
+    -- a preference. It cannot express ${VAR:-default}, and it errors on a file
+    -- included twice -- so naming both the default and the XDG location, the
+    -- way tmux.conf does, puts a dialog in front of every new terminal. One
+    -- include can therefore only say $HOME, and this has to match it.
+    { src = "kitty.conf.in", out = "$HOME/.cache/dotfiles/theme/kitty.conf" },
 }
 
 local templates = {}
