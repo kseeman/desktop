@@ -7,6 +7,18 @@
 # session directory is root-owned and shared, so a relative or ~-based path
 # would never resolve.
 #
+# The "--" before the compositor is load-bearing, not punctuation. uwsm parses
+# its command line with argparse, taking the compositor as a plain positional,
+# and never calls parse_known_args -- so a trailing "--config <path>" is read as
+# an option to uwsm itself and rejected with "unrecognized arguments". uwsm then
+# exits before starting anything and the display manager returns to the greeter,
+# which looks like a failed login rather than a malformed command. HyDE's own
+# entry needs no "--" only because a Desktop Entry ID takes no trailing options.
+#
+# Check a change here with a dry run, which starts nothing:
+#
+#   uwsm start -n -e -D Hyprland -- Hyprland --config <path>
+#
 # The config is named with --config rather than by setting HYPRLAND_CONFIG.
 # HyDE's ~/.config/uwsm/env-hyprland.d/00-hyde.sh assigns that variable
 # unconditionally, so relying on it would mean winning an ordering contest
@@ -14,7 +26,7 @@
 # no HyDE file touched. Removing this one file reverts to HyDE entirely.
 Name=Hyprland (dotfiles)
 Comment=Lua-native Hyprland configuration from this dotfiles repository
-Exec=uwsm start -e -D Hyprland Hyprland --config @INIT_LUA@
+Exec=uwsm start -e -D Hyprland -- Hyprland --config @INIT_LUA@
 TryExec=Hyprland
 DesktopNames=Hyprland
 Type=Application
