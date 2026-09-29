@@ -11,7 +11,10 @@ local roles = require("lib.roles")
 
 local mod = "SUPER"
 
-hl.bind(mod .. " + SPACE", roles.action("launcher"), { desc = "launcher" })
+-- "space", not "SPACE". Hyprland matches key names against xkbcommon keysyms
+-- and the comparison is case-sensitive, so a miscased name binds a key that
+-- can never be pressed -- silently, because the binding registers fine.
+hl.bind(mod .. " + space", roles.action("launcher"), { desc = "launcher" })
 
 -- cliphist stores the history -- see startup.lua, which runs the two
 -- `cliphist store` watchers. That is infrastructure rather than part of this

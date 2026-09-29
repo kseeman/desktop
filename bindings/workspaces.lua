@@ -16,6 +16,6 @@ end
 
 -- Relative movement. "r" is relative within the monitor rather than across all
 -- of them, so this walks 1-7 on the ultrawide without falling onto the 4K.
-hl.bind(mod .. " + CONTROL + right", hl.dsp.focus({ workspace = "r+1" }), { desc = "workspace: next" })
-hl.bind(mod .. " + CONTROL + left", hl.dsp.focus({ workspace = "r-1" }), { desc = "workspace: previous" })
-hl.bind(mod .. " + CONTROL + down", hl.dsp.focus({ workspace = "empty" }), { desc = "workspace: first empty" })
+hl.bind(mod .. " + CONTROL + Right", hl.dsp.focus({ workspace = "r+1" }), { desc = "workspace: next" })
+hl.bind(mod .. " + CONTROL + Left", hl.dsp.focus({ workspace = "r-1" }), { desc = "workspace: previous" })
+hl.bind(mod .. " + CONTROL + Down", hl.dsp.focus({ workspace = "empty" }), { desc = "workspace: first empty" })

@@ -114,6 +114,50 @@ if [[ $exec_warnings -gt 0 ]]; then
 fi
 
 # -----------------------------------------------------------------------------
+# Key names
+# -----------------------------------------------------------------------------
+
+# Hyprland matches a binding's key against xkbcommon's keysym names, and the
+# comparison is case-sensitive. A miscased name still registers: `hyprctl binds`
+# shows it, with the right modifiers and description, and it can simply never be
+# pressed. Nothing errors, nothing logs, and the binding is invisible in every
+# way except that it does nothing.
+#
+# That is how "SPACE" and four lower-case arrow keys sat broken -- the launcher
+# and every focus, resize and workspace-navigation binding -- until someone
+# happened to notice one of them.
+#
+# Only literal names are checked. A key built from a variable cannot be read
+# statically, so this is a warning like the exec scan above rather than a gate.
+if command -v python3 > /dev/null; then
+    bad_keys=""
+
+    while IFS= read -r key; do
+        python3 - "$key" << 'PYEOF' || bad_keys+=" $key"
+import ctypes, sys
+
+lib = ctypes.CDLL("libxkbcommon.so.0")
+lib.xkb_keysym_from_name.restype = ctypes.c_uint32
+sys.exit(0 if lib.xkb_keysym_from_name(sys.argv[1].encode(), 0) else 1)
+PYEOF
+    done < <(
+        grep -rhoE '" \+ [A-Za-z_]+"|key = "[A-Za-z_]+"' "$(dirname "$CONFIG")/bindings" 2> /dev/null \
+            | grep -oE '[A-Za-z_]+"' | tr -d '"' | sort -u \
+            | grep -viE '^(mod|SUPER|SHIFT|CONTROL|ALT|dir|key)$'
+    )
+
+    if [[ -n "$bad_keys" ]]; then
+        echo "Warning: these are not xkbcommon keysyms, so the bindings using"
+        echo "them register but can never fire:"
+        for key in $bad_keys; do
+            echo "    $key"
+        done
+        echo "    Check the case -- it is 'space' and 'Left', not 'SPACE' and 'left'."
+        echo ""
+    fi
+fi
+
+# -----------------------------------------------------------------------------
 # Verify
 # -----------------------------------------------------------------------------
 

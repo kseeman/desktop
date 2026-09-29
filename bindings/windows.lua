@@ -19,8 +19,19 @@ hl.bind(mod .. " + G", hl.dsp.group.toggle(), { desc = "toggle group" })
 hl.bind(mod .. " + CONTROL + H", hl.dsp.group.prev(), { desc = "group: previous" })
 hl.bind(mod .. " + CONTROL + L", hl.dsp.group.next(), { desc = "group: next" })
 
-for _, dir in ipairs({ "left", "right", "up", "down" }) do
-    hl.bind(mod .. " + " .. dir, hl.dsp.focus({ direction = dir }), { desc = "focus " .. dir })
+-- The key name and the direction argument look alike and are not the same
+-- thing. Hyprland matches keys against xkbcommon keysyms, where the arrows are
+-- capitalised; the dispatcher takes a direction, which is lower case. Using one
+-- string for both bound four keys that do not exist, silently.
+local DIRECTIONS = {
+    { key = "Left", dir = "left" },
+    { key = "Right", dir = "right" },
+    { key = "Up", dir = "up" },
+    { key = "Down", dir = "down" },
+}
+
+for _, d in ipairs(DIRECTIONS) do
+    hl.bind(mod .. " + " .. d.key, hl.dsp.focus({ direction = d.dir }), { desc = "focus " .. d.dir })
 end
 
 hl.bind("ALT + Tab", hl.dsp.window.cycle_next(), { desc = "cycle focus" })
@@ -33,22 +44,24 @@ local RESIZE = {
     down = { 0, 30 },
 }
 
-for dir, delta in pairs(RESIZE) do
+for _, d in ipairs(DIRECTIONS) do
+    local delta = RESIZE[d.dir]
+
     hl.bind(
-        mod .. " + SHIFT + " .. dir,
+        mod .. " + SHIFT + " .. d.key,
         hl.dsp.window.resize({ x = delta[1], y = delta[2] }),
-        { desc = "resize " .. dir, repeating = true }
+        { desc = "resize " .. d.dir, repeating = true }
     )
 end
 
 -- Move the window itself. In the source this tried a pixel move and fell back
 -- to a tiling move; a tiled window cannot be nudged by pixels, so the direction
 -- form is what actually ran nearly always.
-for _, dir in ipairs({ "left", "right", "up", "down" }) do
+for _, d in ipairs(DIRECTIONS) do
     hl.bind(
-        mod .. " + SHIFT + CONTROL + " .. dir,
-        hl.dsp.window.move({ direction = dir }),
-        { desc = "move window " .. dir, repeating = true }
+        mod .. " + SHIFT + CONTROL + " .. d.key,
+        hl.dsp.window.move({ direction = d.dir }),
+        { desc = "move window " .. d.dir, repeating = true }
     )
 end
 
