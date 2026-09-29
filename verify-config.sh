@@ -64,12 +64,20 @@ fi
 #   hl.dsp.exec_cmd(...) passed to hl.bind           does NOT -- it builds a
 #                                                    dispatcher, so bindings are
 #                                                    safe and must not be flagged
+#   a Lua function passed to hl.bind                 does NOT -- it is stored,
+#                                                    not called, so an exec in a
+#                                                    keybind body is deferred
 #   anything inside hl.on("hyprland.start", ...)     does NOT
 #
-# The last two are why this is a per-file rule rather than a per-line one. An
+# The last three are why this is a per-file rule rather than a per-line one. An
 # exec indented inside a top-level `for` still runs, and an exec reached through
 # a function call cannot be spotted by grep at all -- so what is checked is
-# whether a file that execs has an hl.on("hyprland.start") to put them in.
+# whether a file that execs has somewhere to defer them to.
+#
+# Both hl.on("hyprland.start") and hl.bind defer, so either exempts a file. That
+# exempts a bindings file wholesale, which is the point rather than a weakness:
+# a keybind body is where a deferred exec belongs, and what this is looking for
+# is an exec with nowhere to defer to at all.
 #
 # Note hl.dsp.exec_cmd does not contain the substring hl.exec_cmd, so the
 # pattern below passes over every binding without needing to exclude it.
@@ -82,7 +90,7 @@ exec_warnings=0
 
 while IFS= read -r module; do
     grep -qE "$EXEC_PATTERN" "$module" 2> /dev/null || continue
-    grep -q 'hl\.on("hyprland\.start"' "$module" 2> /dev/null && continue
+    grep -qE 'hl\.on\("hyprland\.start"|hl\.bind\(' "$module" 2> /dev/null && continue
 
     if [[ $exec_warnings -eq 0 ]]; then
         echo "Warning: these run whenever the config is verified, not just at login:"
