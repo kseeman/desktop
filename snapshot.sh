@@ -42,6 +42,18 @@ LABEL=""
 # to reproduce today exactly, and "it would probably rebuild itself" is not a
 # guarantee. ~/HyDE is the one exception -- it is a git clone, so META records
 # its remote and commit instead of 400MB of history.
+#
+# Four of these are here because config alone does not describe a desktop:
+#
+#   .local/state/hyde     staterc names the *active* theme. Without it a restore
+#                         puts back all 61 themes and none of them selected.
+#   .local/share/waybar   the layouts and styles staterc points at, which live
+#   .local/share/rofi     outside the captured ~/.config counterparts.
+#   .local/share/themes   the target of the captured ~/.config/gtk-4.0 symlink.
+#                         Restoring the link without it leaves it dangling.
+#
+# ~/.local/share/icons (6.7GB) is left out: it is an installed asset, replaced
+# by reinstalling its package, and nothing here modifies it.
 SNAPSHOT_PATHS=(
     .config/hypr
     .config/hyde
@@ -60,13 +72,29 @@ SNAPSHOT_PATHS=(
     .config/uwsm
     .config/pypr
     .config/zsh
+    .config/dconf
+    .config/systemd/user
     .local/lib/hyde
     .local/share/hyde
     .local/share/hypr
+    .local/share/waybar
+    .local/share/rofi
+    .local/share/themes
+    .local/state/hyde
     .local/bin/hyde-shell
     .local/bin/hydectl
+    .gtkrc-2.0
     .zshenv
     .zshrc
+)
+
+# Excluded from the paths above, not from the snapshot as a whole. These are
+# build artefacts of a package manager rather than configuration: 638MB of the
+# 639MB in ~/.local/state/hyde is two virtualenvs, while the part that matters
+# is a 236-byte staterc naming the active theme.
+SNAPSHOT_EXCLUDES=(
+    /.local/state/hyde/python_env
+    /.local/state/hyde/pip_env
 )
 
 # -----------------------------------------------------------------------------
@@ -87,6 +115,20 @@ for arg in "$@"; do
             exit 1
             ;;
         *)
+            # The label becomes part of a directory name and passes through
+            # eval in run(), so it is restricted rather than sanitised: a slash
+            # would nest the snapshot somewhere unintended, and a quote would
+            # break the commands built from it.
+            [[ -z "$LABEL" ]] || {
+                echo "snapshot.sh: only one label, got '$LABEL' and '$arg'" >&2
+                exit 1
+            }
+
+            [[ "$arg" =~ ^[A-Za-z0-9._-]+$ ]] || {
+                echo "snapshot.sh: label may only contain letters, digits, . _ -" >&2
+                exit 1
+            }
+
             LABEL="$arg"
             ;;
     esac
@@ -123,10 +165,14 @@ DEST="$SNAPSHOT_ROOT/$name"
 # The most recent existing snapshot, used as rsync's --link-dest so unchanged
 # files are hardlinked rather than copied again. Without it, one snapshot per
 # migration phase would cost 2.4GB each.
+# MANIFEST is written last, so its presence is what distinguishes a finished
+# snapshot from the remains of an interrupted one. Hardlinking against wreckage
+# would be wrong, and picking it as "the latest" is how a restore ends up
+# diagnosing the wrong problem.
 previous=""
 if [[ -d "$SNAPSHOT_ROOT" ]]; then
-    previous="$(find "$SNAPSHOT_ROOT" -mindepth 1 -maxdepth 1 -type d -name '20*' 2>/dev/null |
-        sort | tail -1)"
+    previous="$(find "$SNAPSHOT_ROOT" -mindepth 2 -maxdepth 2 -name MANIFEST 2>/dev/null |
+        xargs -r -n1 dirname | sort | tail -1)"
 fi
 
 info "Snapshot: $DEST"
@@ -160,12 +206,28 @@ rsync_opts=(-aHR --info=stats1)
 [[ -n "$previous" ]] && rsync_opts+=("--link-dest=$previous/files")
 [[ "$DRY_RUN" == true ]] && rsync_opts+=(--dry-run)
 
+# Anchored at the transfer root, which -R makes the $HOME-relative path.
+for exclude in "${SNAPSHOT_EXCLUDES[@]}"; do
+    rsync_opts+=("--exclude=$exclude")
+done
+
 sources=()
 for path in "${present[@]}"; do
     sources+=("$HOME/./$path")
 done
 
-rsync "${rsync_opts[@]}" "${sources[@]}" "$DEST/files/"
+# 24 is "a source file vanished during the transfer", which is routine when
+# copying a live ~/.config out from under running applications and does not make
+# the snapshot unusable. Anything else is a real failure and stops the run.
+rsync_status=0
+rsync "${rsync_opts[@]}" "${sources[@]}" "$DEST/files/" || rsync_status=$?
+
+if [[ $rsync_status -ne 0 && $rsync_status -ne 24 ]]; then
+    echo "rsync failed with status $rsync_status" >&2
+    exit 1
+fi
+
+[[ $rsync_status -eq 24 ]] && echo "    (some files vanished mid-copy; that is expected on a live system)"
 
 # -----------------------------------------------------------------------------
 # System state
@@ -173,9 +235,13 @@ rsync "${rsync_opts[@]}" "${sources[@]}" "$DEST/files/"
 
 info "Recording package and service state..."
 
+# || true on both: a pacman query with no results exits 1, and under `set -e`
+# that would abandon the snapshot here -- after files/ is written but before the
+# manifest that makes it restorable. A machine with no AUR packages is ordinary,
+# not an error.
 if command -v pacman &>/dev/null; then
-    run "pacman -Qqe > '$DEST/packages/pacman-explicit.txt'"
-    run "pacman -Qqm > '$DEST/packages/pacman-foreign.txt'"
+    run "pacman -Qqe > '$DEST/packages/pacman-explicit.txt' || true"
+    run "pacman -Qqm > '$DEST/packages/pacman-foreign.txt' || true"
 fi
 
 if command -v systemctl &>/dev/null; then
