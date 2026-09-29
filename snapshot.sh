@@ -5,7 +5,7 @@
 # -----------------------------------------------------------------------------
 #
 # Captures the current desktop configuration so it can be put back exactly as it
-# is today. This exists for the HyDE -> Lua migration: every phase of that work
+# is today. It was written for the HyDE -> Lua migration, where every phase
 # is reversible, and this is what "reversible" is measured against.
 #
 #   snapshot.sh                 snapshot to $XDG_DATA_HOME/dotfiles/snapshots
@@ -110,7 +110,6 @@ LABEL=""
 # predate the spec and are read from $HOME by the programs that own them.
 SNAPSHOT_PATHS=(
     "$CONFIG/hypr"
-    "$CONFIG/hyde"
     "$CONFIG/waybar"
     "$CONFIG/rofi"
     "$CONFIG/dunst"
@@ -125,19 +124,13 @@ SNAPSHOT_PATHS=(
     "$CONFIG/xsettingsd"
     "$CONFIG/uwsm"
     "$CONFIG/pypr"
-    "$CONFIG/zsh"
     "$CONFIG/dconf"
     "$CONFIG/systemd/user"
     "$CONFIG/dotfiles"
-    .local/lib/hyde
-    "$DATA/hyde"
     "$DATA/hypr"
     "$DATA/waybar"
     "$DATA/rofi"
     "$DATA/themes"
-    "$STATE/hyde"
-    "$BIN/hyde-shell"
-    "$BIN/hydectl"
     .gtkrc-2.0
     .zshenv
     .zshrc
@@ -147,10 +140,7 @@ SNAPSHOT_PATHS=(
 # build artefacts of a package manager rather than configuration: 638MB of the
 # 639MB in ~/.local/state/hyde is two virtualenvs, while the part that matters
 # is a 236-byte staterc naming the active theme.
-SNAPSHOT_EXCLUDES=(
-    "/$STATE/hyde/python_env"
-    "/$STATE/hyde/pip_env"
-)
+SNAPSHOT_EXCLUDES=()
 
 # -----------------------------------------------------------------------------
 # Arguments
