@@ -1,37 +1,19 @@
--- Keybindings.
+-- -----------------------------------------------------------------------------
+-- Keybindings
+-- -----------------------------------------------------------------------------
 --
--- P3 ports all 115. This file carries only what makes the session usable and,
--- more importantly, escapable: a terminal, a window close, and an exit. A
--- session you cannot get out of without a TTY is not a safe thing to log into.
+-- Split by what a binding is for rather than by which key it uses, so adding
+-- one means opening the file named after the thing it does.
 --
--- Descriptions are filled in throughout because hl.bind takes them natively and
--- `hyprctl binds -j` can then drive a cheatsheet, the way tmux's `list-keys -N`
--- does for the tmux one.
-local mod = "SUPER"
-
-hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"), { desc = "terminal" })
-
-hl.bind(mod .. " + Q", hl.dsp.window.close(), { desc = "close window" })
-hl.bind(mod .. " + W", hl.dsp.window.float({ action = "toggle" }), { desc = "toggle floating" })
-hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"), { desc = "toggle split" })
-
--- Deliberately bound from the first boot: without it, leaving this session
--- means switching to a TTY and killing the compositor.
-hl.bind(mod .. " + SHIFT + M", hl.dsp.exit(), { desc = "exit hyprland" })
-
-for _, dir in ipairs({ "left", "right", "up", "down" }) do
-    hl.bind(mod .. " + " .. dir, hl.dsp.focus({ direction = dir }), { desc = "focus " .. dir })
-end
-
-for i = 1, 10 do
-    local key = i % 10
-    hl.bind(mod .. " + " .. key, hl.dsp.focus({ workspace = i }), { desc = "workspace " .. i })
-    hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }), { desc = "move to workspace " .. i })
-end
-
-hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, desc = "drag window" })
-hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, desc = "resize window" })
-
+-- Every binding carries a `desc`. That is not documentation: `hyprctl binds`
+-- reports a Lua dispatcher as an opaque registry index, so the description is
+-- the only readable record of what a key does -- exactly the constraint tmux
+-- has, where `list-keys -N` shows only bindings with a note and one added
+-- without is silently missing from the search.
+require("bindings.apps")
+require("bindings.windows")
+require("bindings.workspaces")
 require("bindings.launchers")
 require("bindings.screenshot")
 require("bindings.media")
+require("bindings.session")
