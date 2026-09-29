@@ -1,0 +1,3 @@
+# Makes Theme a singleton, so every component reads the same palette without
+# being handed one. QML needs this file for `pragma Singleton` to resolve.
+singleton Theme 1.0 Theme.qml
