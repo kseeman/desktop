@@ -180,9 +180,17 @@ Singleton {
         id: listProc
         command: ["cliphist", "list"]
         stdout: StdioCollector { id: collected }
-        onExited: {
-            if (listProc.exitCode !== 0) {
-                console.warn("cliphist list failed with exit code " + listProc.exitCode + ", retrying once");
+        // LOCAL CHANGE (see VENDORED.md): the exit code is taken from the
+        // signal rather than read off the object.
+        //
+        // Quickshell 0.3.1 declares `exited(int exitCode, int exitStatus)` and
+        // has no exitCode *property*, so `listProc.exitCode` is undefined here
+        // -- and `undefined !== 0` is true, so every successful read took the
+        // failure branch and applyList() was never reached. The surface stayed
+        // empty and `loaded` stayed false while a 2s timer retried forever.
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                console.warn("cliphist list failed with exit code " + exitCode + ", retrying once");
                 root.pending = false;
                 listRetry.restart();
                 return;
