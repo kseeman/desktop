@@ -1,0 +1,51 @@
+/* Styling for the logout menu.
+ *
+ * Colours mirror lib/palette.lua. wlogout reads CSS and cannot require Lua, so
+ * they sit in the @define-color block P6 will generate -- the same arrangement
+ * hyprlock's colour block gets, and the reason no colour appears below except
+ * by name.
+ *
+ * Text rather than icons on purpose: icon buttons mean shipping or depending on
+ * an icon set, and this menu has five buttons that each say what they do. */
+
+@define-color root   #120D1D;
+@define-color base   #1F1829;
+@define-color raised #322948;
+@define-color accent #6E5E8C;
+@define-color fg     #B5B0B1;
+
+window {
+    /* Not opaque: the session stays visible behind the menu, which is what
+     * makes it read as a dialog over the desktop rather than a new screen. */
+    background-color: alpha(@root, 0.85);
+}
+
+button {
+    background-color: @base;
+    color: @fg;
+    border: 2px solid @raised;
+    border-radius: 10px;
+
+    font-family: "CaskaydiaCove Nerd Font";
+    font-size: 16px;
+
+    margin: 8px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+button:hover,
+button:focus {
+    background-color: @raised;
+    border-color: @accent;
+    color: @fg;
+}
+
+/* Shutdown is the one that loses unsaved work without asking, so it is the one
+ * that does not look like the others when the pointer is on it. */
+#shutdown:hover,
+#shutdown:focus {
+    border-color: @accent;
+    background-color: @accent;
+    color: @root;
+}

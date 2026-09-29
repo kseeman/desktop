@@ -1,0 +1,30 @@
+{
+    "label": "lock",
+    "action": "hyprlock -c $HOME/.dotfiles/os/linux/desktop/hyprlock.conf",
+    "text": "Lock",
+    "keybind": "l"
+}
+{
+    "label": "logout",
+    "action": "uwsm stop",
+    "text": "Log out",
+    "keybind": "e"
+}
+{
+    "label": "suspend",
+    "action": "hyprlock -c $HOME/.dotfiles/os/linux/desktop/hyprlock.conf & disown && systemctl suspend",
+    "text": "Suspend",
+    "keybind": "u"
+}
+{
+    "label": "reboot",
+    "action": "systemctl reboot",
+    "text": "Restart",
+    "keybind": "r"
+}
+{
+    "label": "shutdown",
+    "action": "systemctl poweroff",
+    "text": "Shut down",
+    "keybind": "s"
+}
