@@ -23,6 +23,19 @@ Nothing depends on it, and nothing here needs to stay in step with it.
 Kept short on purpose: every entry here is a line that has to be re-applied by
 hand if this is ever re-copied from upstream.
 
+  - `Singletons/Cliphist.qml` — `listProc.onExited` takes the exit code from
+    the signal, `(exitCode, exitStatus) => …`, instead of reading
+    `listProc.exitCode` off the object.
+
+    **A version incompatibility, so check this first if another surface goes
+    quiet.** Quickshell 0.3.1 declares `exited(int exitCode, int exitStatus)`
+    and has no `exitCode` property; upstream targets a newer build where it is
+    one. Reading the property yields `undefined`, `undefined !== 0` is true, so
+    every *successful* read took the failure branch: `applyList()` never ran,
+    the surface showed `0 / 0` with no "History empty" message, and a 2s timer
+    retried forever. `cliphist list` in a terminal returned 750 entries
+    throughout. This was the only `.exitCode` read in the tree.
+
   - `Pill.qml` + `shell.qml` — the rest height is 28 where upstream has 38.
     The number is written in both files (`restH` draws it, `restHeight`
     reserves it from tiled windows) and they have to agree, so each carries a
