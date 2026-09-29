@@ -9,7 +9,7 @@
 -- a real single point of failure, and it is the trade that was chosen.
 local mod = "SUPER"
 
-local PILL = os.getenv("HOME") .. "/.dotfiles/os/linux/desktop/quickshell/pill"
+local PILL = require("lib.paths").desktop_file("quickshell/pill")
 
 -- The instance is addressed by the config path it was started with, which is
 -- what startup.lua passes to `quickshell -p`. Upstream uses `qs -c pill`, which

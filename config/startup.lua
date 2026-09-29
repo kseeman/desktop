@@ -25,7 +25,9 @@
 --   blueman-applet     tray for everything else. These would duplicate it.
 --   waybar, wallpaper  the pill replaces both: it is the bar, and it sets the
 --                      wallpaper itself from Flags.wallpaperDir.
-local DESKTOP = os.getenv("HOME") .. "/.dotfiles/os/linux/desktop"
+local paths = require("lib.paths")
+
+local DESKTOP = paths.desktop
 
 hl.on("hyprland.start", function()
     -- Authentication prompts. Without an agent, anything asking for a password
@@ -41,7 +43,7 @@ hl.on("hyprland.start", function()
 
     -- Idle locking, from this repo's config rather than the HyDE one that calls
     -- hyde-shell.
-    hl.exec_cmd("hypridle -c " .. DESKTOP .. "/hypridle.conf")
+    hl.exec_cmd("hypridle -c " .. DESKTOP .. "hypridle.conf")
 
     -- Blue light filter.
     hl.exec_cmd("hyprsunset")
@@ -64,5 +66,5 @@ hl.on("hyprland.start", function()
     -- quickshell/apply-palette.sh from lib/palette.lua. The pill watches that
     -- file, so a theme change repaints it without a restart and nothing here
     -- needs to know about colour.
-    hl.exec_cmd("quickshell -p " .. DESKTOP .. "/quickshell/pill")
+    hl.exec_cmd("quickshell -p " .. DESKTOP .. "quickshell/pill")
 end)
