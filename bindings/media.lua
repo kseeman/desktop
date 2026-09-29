@@ -16,8 +16,18 @@ local STEP = "5%"
 -- Locked so the keys keep working on the lock screen, and repeating so holding
 -- one ramps rather than stepping once. Both carried over from the source, where
 -- they are the `l` and `e` in binddl/binddel.
-local HELD = { locked = true, repeating = true }
-local TAP = { locked = true }
+--
+-- These take a description because every binding must: hyprctl reports a Lua
+-- dispatcher as an opaque index, so the description is the only readable record
+-- of what a key does. Passing a bare options table is how eleven of these ended
+-- up anonymous in the first place.
+local function held(desc)
+    return { locked = true, repeating = true, desc = desc }
+end
+
+local function tap(desc)
+    return { locked = true, desc = desc }
+end
 
 -- `wpctl get-volume` prints "Volume: 0.45", or "Volume: 0.45 [MUTED]".
 local function read_volume(target)
@@ -68,26 +78,26 @@ end
 
 -- -l 1 caps the volume at 100%. Without it wpctl happily goes past unity and
 -- into distortion, which is a surprising thing for a volume key to do.
-hl.bind("XF86AudioRaiseVolume", output("set-volume -l 1 " .. SINK .. " " .. STEP .. "+"), HELD)
-hl.bind("XF86AudioLowerVolume", output("set-volume " .. SINK .. " " .. STEP .. "-"), HELD)
-hl.bind("XF86AudioMute", output("set-mute " .. SINK .. " toggle"), TAP)
+hl.bind("XF86AudioRaiseVolume", output("set-volume -l 1 " .. SINK .. " " .. STEP .. "+"), held("volume up"))
+hl.bind("XF86AudioLowerVolume", output("set-volume " .. SINK .. " " .. STEP .. "-"), held("volume down"))
+hl.bind("XF86AudioMute", output("set-mute " .. SINK .. " toggle"), tap("mute output"))
 
 -- F10/F11/F12 duplicate the media keys for keyboards without them.
-hl.bind("F12", output("set-volume -l 1 " .. SINK .. " " .. STEP .. "+"), HELD)
-hl.bind("F11", output("set-volume " .. SINK .. " " .. STEP .. "-"), HELD)
-hl.bind("F10", output("set-mute " .. SINK .. " toggle"), TAP)
+hl.bind("F12", output("set-volume -l 1 " .. SINK .. " " .. STEP .. "+"), held("volume up"))
+hl.bind("F11", output("set-volume " .. SINK .. " " .. STEP .. "-"), held("volume down"))
+hl.bind("F10", output("set-mute " .. SINK .. " toggle"), tap("mute output"))
 
 hl.bind("XF86AudioMicMute", function()
     os.execute("wpctl set-mute " .. SOURCE .. " toggle")
     report("microphone", SOURCE)
-end, TAP)
+end, tap("mute microphone"))
 
 -- Playback. playerctl talks MPRIS, so these reach whatever is playing without
 -- knowing which application it is.
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), TAP)
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), TAP)
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), TAP)
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), TAP)
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), tap("play/pause"))
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), tap("play/pause"))
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), tap("next track"))
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), tap("previous track"))
 
 -- Brightness keys are deliberately unbound. brightnessctl finds no backlight on
 -- this machine -- the only device it reports is a scroll-lock LED -- so binding
