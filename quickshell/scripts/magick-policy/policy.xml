@@ -11,8 +11,19 @@
   <policy domain="coder" rights="none" pattern="*"/>
   <policy domain="coder" rights="read | write" pattern="{PNG,JPEG,JPG,GIF,WEBP,BMP,TIFF}"/>
   <policy domain="path" rights="none" pattern="@*"/>
-  <policy domain="resource" name="memory" value="256MiB"/>
-  <policy domain="resource" name="map" value="512MiB"/>
-  <policy domain="resource" name="disk" value="1GiB"/>
-  <policy domain="resource" name="time" value="30"/>
+  <!--
+    Raised from 256MiB/512MiB/1GiB/30s, which silently dropped a 15360x8640
+    wallpaper: 132 megapixels needs roughly 530MB decoded, so ImageMagick
+    refused with "cache resources exhausted" and the picker simply showed one
+    fewer image than the folder held.
+
+    These four are the only lines here that bound *resources*; everything above
+    bounds what may run. A decompression bomb is still capped, just at a size a
+    real 8K wallpaper fits inside -- while the coder, delegate and @file rules
+    that close the actual RCE vectors are untouched.
+  -->
+  <policy domain="resource" name="memory" value="1GiB"/>
+  <policy domain="resource" name="map" value="2GiB"/>
+  <policy domain="resource" name="disk" value="4GiB"/>
+  <policy domain="resource" name="time" value="60"/>
 </policymap>
