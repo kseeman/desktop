@@ -9,6 +9,7 @@
 #   archive.sh list                       what is on the destination
 #   archive.sh put [snapshot]             pack, encrypt and copy (latest by default)
 #   archive.sh get <name>                 bring one back as a local snapshot
+#   archive.sh verify [name]              check the checksum and the passphrase
 #
 # The snapshots themselves stay where they are. This is a second, slower copy
 # for the failure the local ones cannot cover: the machine being lost rather
@@ -52,7 +53,15 @@ info() { echo ""; echo "==> $*"; }
 
 # Read once, then hand it to gpg on fd 3. Not fd 0: that is the tar stream, and
 # gpg would happily take the first line of the archive as the passphrase.
+# `read_passphrase confirm` asks twice and compares, which is what writing an
+# archive needs: nothing downstream can tell a typo from a passphrase, so a
+# mistyped one encrypts successfully, reports Done, and stays wrong until the
+# day the archive is needed. Reading is different -- a wrong passphrase there
+# simply fails to decrypt, immediately and visibly -- so `get` and `verify` ask
+# once.
 read_passphrase() {
+    local confirm="${1:-}"
+
     if [[ -n "${DOTFILES_ARCHIVE_PASSPHRASE:-}" ]]; then
         PASSPHRASE="$DOTFILES_ARCHIVE_PASSPHRASE"
         return 0
@@ -81,6 +90,18 @@ read_passphrase() {
         echo "Run this from a terminal, or set DOTFILES_ARCHIVE_PASSPHRASE." >&2
         exit 1
     }
+
+    if [[ "$confirm" == "confirm" ]]; then
+        local again=""
+
+        read -rsp "    Again:      " again < /dev/tty || again=""
+        echo ""
+
+        [[ "$PASSPHRASE" == "$again" ]] || {
+            echo "The two did not match; nothing written." >&2
+            exit 1
+        }
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -142,6 +163,24 @@ latest_snapshot() {
 # Commands
 # -----------------------------------------------------------------------------
 
+# The most recently archived name, so `verify` needs no argument in the common
+# case -- checking the one just written.
+#
+# Sorted by name rather than mtime: the names are timestamps, and a restored or
+# recopied archive would carry a newer mtime while being an older snapshot.
+latest_archived() {
+    local f newest=""
+
+    for f in "$DEST"/*.sha256; do
+        [[ -f "$f" ]] || continue
+        local name
+        name="$(basename "$f" .sha256)"
+        [[ "$name" > "$newest" ]] && newest="$name"
+    done
+
+    printf '%s' "$newest"
+}
+
 cmd_list() {
     require_mounted
 
@@ -183,7 +222,7 @@ cmd_put() {
     #
     # The sha256 is of the encrypted stream, so it verifies what is actually on
     # the stick rather than what was meant to be written.
-    read_passphrase
+    read_passphrase confirm
 
     # After the passphrase, so a refused prompt leaves nothing behind. An empty
     # directory on the stick looks like an archive that failed halfway.
@@ -236,8 +275,72 @@ cmd_get() {
     echo "    restore it with: $DESKTOP_DIR/restore.sh --dry-run"
 }
 
+# Check an archive without unpacking it: the checksum against the bytes on the
+# stick, then the passphrase against the archive itself.
+#
+# This exists because `put` cannot prove its own passphrase was typed correctly
+# -- it can only prove the one it was given encrypts. Only a decrypt proves the
+# passphrase in the password manager is the one that opens the archive, and
+# that is worth knowing before the machine is gone rather than after.
+#
+# `tar -t` rather than `-x`: the whole stream is still read and every header
+# parsed, so a truncated or corrupted archive is caught, but nothing is written
+# and there is no temporary copy to remember to delete.
+cmd_verify() {
+    require_mounted
+
+    local name="${1:-$(latest_archived)}"
+
+    [[ -n "$name" ]] || {
+        echo "Nothing archived at $DEST" >&2
+        exit 1
+    }
+
+    local parts=("$DEST/$name".part-*)
+
+    [[ -e "${parts[0]}" ]] || {
+        echo "No archive named $name at $DEST" >&2
+        exit 1
+    }
+
+    info "Verifying $name"
+
+    local recorded
+    recorded="$(awk '{print $1}' "$DEST/$name.sha256" 2> /dev/null || true)"
+
+    if [[ -n "$recorded" ]]; then
+        local actual
+        actual="$(cat "${parts[@]}" | sha256sum | awk '{print $1}')"
+
+        if [[ "$actual" == "$recorded" ]]; then
+            echo "    checksum    ok"
+        else
+            echo "    checksum    MISMATCH -- the bytes on the disk are not the ones written" >&2
+            exit 1
+        fi
+    else
+        echo "    checksum    no .sha256 recorded, skipping" >&2
+    fi
+
+    read_passphrase
+
+    if cat "${parts[@]}" \
+        | gpg --decrypt --batch --quiet --pinentry-mode loopback \
+            --passphrase-fd 3 3<<< "$PASSPHRASE" 2> /dev/null \
+        | tar -tz > /dev/null 2>&1; then
+        echo "    passphrase  ok"
+        echo "    archive     readable end to end"
+    else
+        echo "    passphrase  WRONG, or the archive is damaged" >&2
+        exit 1
+    fi
+
+    info "Done"
+}
+
 case "${1:-list}" in
     list) cmd_list ;;
+    verify) cmd_verify "${2:-}" ;;
     put) cmd_put "${2:-}" ;;
     get) cmd_get "${2:-}" ;;
     --help | -h) sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//' ;;
