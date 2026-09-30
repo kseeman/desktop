@@ -20,5 +20,7 @@ return {
         rounding = 10,
         blur = true,
         motion_speed = 4.2,
+
+        icon_theme = "Tela-circle-grey",
     },
 }

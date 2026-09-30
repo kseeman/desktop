@@ -18,5 +18,7 @@ return {
         -- Faster than violet's 4.2. A minimal look that moves slowly reads as
         -- sluggish rather than calm, because there is no depth to justify it.
         motion_speed = 2.6,
+
+        icon_theme = "Tela-circle-grey",
     },
 }
