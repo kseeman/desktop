@@ -31,6 +31,21 @@ local roles = require("lib.roles")
 local DESKTOP = paths.desktop
 
 hl.on("hyprland.start", function()
+    -- Sweep any sleep inhibitor the bar left behind.
+    --
+    -- The bar holds a *blocking* logind inhibitor while keep-awake is on, and
+    -- one outliving it means `systemctl suspend` silently does nothing -- the
+    -- bar's own sleep button included, which is how this was found. shell.qml
+    -- now runs it under `setpriv --pdeathsig`, so it cannot outlive the bar;
+    -- this clears anything an older build already left running.
+    --
+    -- `pgrep -x` matches the process *name*, so this cannot match the shell
+    -- running it -- which a `pkill -f` on the same string very much would.
+    hl.exec_cmd(
+        "bash -c 'for p in $(pgrep -x systemd-inhibit); do "
+            .. "grep -qa -- --who=Ricelin /proc/$p/cmdline && kill $p; done'"
+    )
+
     -- Generate the configs that carry colours, before anything that reads one.
     -- The installer does this too; repeating it at login is what makes a
     -- palette edit reach every consumer without running the installer, and it
