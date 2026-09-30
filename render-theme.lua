@@ -154,6 +154,10 @@ local BASE = {
     -- way tmux.conf does, puts a dialog in front of every new terminal. One
     -- include can therefore only say $HOME, and this has to match it.
     { src = "kitty.conf.in", out = "$HOME/.cache/dotfiles/theme/kitty.conf" },
+    -- nvim resolves XDG itself, so unlike kitty this one stays under
+    -- $THEME_DIR. Read by nvim/lua/themes/rice.lua, which owns the mapping
+    -- onto base46's names.
+    { src = "nvim.lua.in", out = "$THEME_DIR/nvim.lua" },
 }
 
 local templates = {}

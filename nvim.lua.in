@@ -1,0 +1,31 @@
+-- -----------------------------------------------------------------------------
+-- The desktop palette, for Neovim
+-- -----------------------------------------------------------------------------
+--
+-- Generated from lib/palette.lua by render-theme.lua, and read by
+-- nvim/lua/themes/rice.lua. Plain data: the mapping onto base46's names lives
+-- in the theme, because that is nvim's concern rather than the desktop's.
+--
+-- nvim is not a swappable component the way a launcher is, so this is rendered
+-- from render-theme.lua's base list rather than declared by a provider.
+--
+-- Unlike kitty's, this output follows XDG_CACHE_HOME. nvim can resolve the base
+-- directories itself, so it has no reason to be pinned to $HOME.
+
+return {
+    root = "@root@",
+    base = "@base@",
+    raised = "@raised@",
+    overlay = "@overlay@",
+    muted = "@muted@",
+
+    bar = "@bar@",
+
+    accent = "@accent@",
+    accent_deep = "@accent_deep@",
+
+    fg = "@fg@",
+    fg_bright = "@fg_bright@",
+    fg_muted = "@fg_muted@",
+    fg_dim = "@fg_dim@",
+}
