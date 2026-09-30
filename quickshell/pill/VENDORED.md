@@ -82,6 +82,19 @@ hand if this is ever re-copied from upstream.
     unreachable. That keeps the diff to four lines and makes restoring the
     upstream behaviour a matter of putting the condition back.
 
+  - `shell.qml` — the keep-awake inhibitor runs under
+    `setpriv --pdeathsig=TERM`.
+
+    **A blocking sleep inhibitor that outlives the bar makes `systemctl
+    suspend` silently do nothing**, which takes the bar's own sleep button with
+    it. Three had accumulated here from pill restarts, with `keepAwake` long
+    since off, and sleep had simply stopped working with no error anywhere.
+
+    Quickshell stopping the `Process` is not enough: the child was reparented
+    and kept running. The death signal is what makes it hold however the bar
+    goes away, including a crash. `setpriv` is util-linux, so it is always
+    present.
+
   - `Pill.qml` — the body's drop shadow is off (`layer.enabled: false` where
     upstream has `!pill.morphing` and a `MultiEffect`). Upstream draws a
     0.7-blur shadow at 50% black offset 3px down, which reads as a halo pooling

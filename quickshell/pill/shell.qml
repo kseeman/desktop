@@ -95,7 +95,18 @@ ShellRoot {
      */
     Process {
         running: Flags.keepAwake
-        command: ["systemd-inhibit", "--what=idle:sleep", "--who=Ricelin",
+        // setpriv --pdeathsig, so the inhibitor dies with the bar.
+        //
+        // Without it the systemd-inhibit outlives a pill restart or crash, and
+        // a *blocking* sleep inhibitor left behind means `systemctl suspend`
+        // silently does nothing -- the pill's own sleep button included. Three
+        // had accumulated here from restarts, with keepAwake long since off.
+        //
+        // Quickshell stopping the Process is not enough on its own: the child
+        // was reparented and kept running. The death signal is what makes this
+        // hold however the bar goes away.
+        command: ["setpriv", "--pdeathsig=TERM",
+                  "systemd-inhibit", "--what=idle:sleep", "--who=Ricelin",
                   "--why=keep awake", "--mode=block", "sleep", "infinity"]
     }
 
