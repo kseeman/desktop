@@ -69,6 +69,19 @@ hand if this is ever re-copied from upstream.
     picture icon), and `wallpaperOpen` added to `surfaceBack()`'s
     settings-return list so its header behaves like every other sub-surface.
 
+  - `shell.qml` + `Pill.qml` — the bar no longer reacts to `Flags.gameMode`.
+    `exclusiveZone` and `implicitHeight` are `reservedH` unconditionally, and
+    `"game"` is gone from `Pill.qml`'s `mode` chain (one closing paren with it).
+
+    Upstream shrinks the bar to a 34px sliver in game mode, which makes it
+    unusable exactly when a game is running full-screen underneath. Game mode
+    here is a compositor change only -- gaps, rounding, blur, shadows,
+    animations and transparency -- and the bar is left alone.
+
+    The `mode === "game"` branches further down are left in place and are now
+    unreachable. That keeps the diff to four lines and makes restoring the
+    upstream behaviour a matter of putting the condition back.
+
   - `Pill.qml` — the body's drop shadow is off (`layer.enabled: false` where
     upstream has `!pill.morphing` and a `MultiEffect`). Upstream draws a
     0.7-blur shadow at 50% black offset 3px down, which reads as a halo pooling

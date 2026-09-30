@@ -239,11 +239,11 @@ ShellRoot {
             screen: modelData
             color: "transparent"
             exclusionMode: ExclusionMode.Normal
-            exclusiveZone: Flags.gameMode ? gameBarH : reservedH
+            exclusiveZone: reservedH
             aboveWindows: true
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: Flags.gameMode ? gameBarH : reservedH
+            implicitHeight: reservedH
 
             mask: emptyReserve
             Region { id: emptyReserve }
