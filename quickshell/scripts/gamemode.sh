@@ -6,8 +6,8 @@
 #
 # Strips the desktop's eye-candy while gaming, and puts it back.
 #
-#   gamemode.sh on     no gaps, no rounding, no blur, nothing transparent
-#                      -- borders stay, or windows become one surface
+#   gamemode.sh on     no gaps, no rounding, no blur, no shadows, no
+#                      animations, nothing transparent -- a 1px border stays
 #   gamemode.sh off    back to the rice
 #
 # Called by the pill: Singletons/GameMode.qml runs this whenever
@@ -50,35 +50,50 @@ usage() {
 
 case "$1" in
     on)
+        # What HyDE's workflows/gaming.conf did, recovered from a snapshot --
+        # shadows, blur, rounding, gaps and animations off, everything opaque,
+        # and a 1px border kept so windows are still told apart.
+        #
         # Everything in one eval: a half-applied strip is a visibly broken
         # desktop, and Hyprland applies the table atomically.
         hyprctl eval '
             hl.config({
-                -- border_size is deliberately not touched. Zeroing it as well
-                -- as the gaps leaves adjacent windows as one undivided surface
-                -- with no telling where one ends -- which is worse to play
-                -- next to than a gap. Borders cost no space once the gaps are
-                -- gone, and they follow the rice like everything else.
-                general = { gaps_in = 0, gaps_out = 0 },
+                general = { gaps_in = 0, gaps_out = 0, border_size = 1 },
                 decoration = {
                     rounding = 0,
                     active_opacity = 1.0,
                     inactive_opacity = 1.0,
-                    blur = { enabled = false },
+                    fullscreen_opacity = 1.0,
+                    shadow = { enabled = false },
+                    -- xray with blur off is what HyDE set: it stops any layer
+                    -- still asking for blur costing a pass over the wallpaper.
+                    blur = { enabled = false, xray = true },
                 },
+                animations = { enabled = false },
             })
         ' > /dev/null
 
         # The per-class opacity rules in config/rules.lua outrank
         # decoration:active_opacity, so turning that up is not enough on its
-        # own -- kitty and the rest stay translucent. A catch-all rule added
-        # last is what actually makes windows opaque, and it goes away with the
-        # reload below rather than needing removal.
+        # own -- kitty and the rest stay translucent. `opaque` is what HyDE
+        # used and is the stronger statement: it drops the alpha of the
+        # window rather than setting a value another rule can outrank.
         hyprctl eval '
             hl.window_rule({
                 name = "gamemode-opaque",
                 match = { class = ".*" },
-                opacity = "1.0 1.0 1",
+                opaque = true,
+            })
+        ' > /dev/null
+
+        # The bar keeps its own blur and animation otherwise, which is a
+        # compositor pass per frame over a layer that is mostly static.
+        hyprctl eval '
+            hl.layer_rule({
+                name = "gamemode-layers",
+                match = { namespace = "^(pill|quickshell)$" },
+                blur = false,
+                no_anim = true,
             })
         ' > /dev/null
         ;;
