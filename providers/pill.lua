@@ -33,6 +33,7 @@ return {
         "tray",
         "media",
         "audio",
+        "gamemode",
     },
 
     start = "quickshell -p " .. PILL,
@@ -54,5 +55,12 @@ return {
         launcher = surface("launcher"),
         clipboard = surface("clipboard"),
         power = surface("power"),
+
+        -- Not a surface: gameMode flips Flags.gameMode, which the pill's own
+        -- GameMode.qml watches and answers by running gamemode.sh. Going
+        -- through the pill rather than calling the script keeps its chip, its
+        -- bar height and the compositor in step -- the script alone would
+        -- strip the desktop while the bar still thought it was off.
+        gamemode = surface("gameMode"),
     },
 }

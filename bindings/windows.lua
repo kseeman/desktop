@@ -1,4 +1,6 @@
 -- Window management.
+local roles = require("lib.roles")
+
 local mod = "SUPER"
 
 -- Repeating, so holding a resize or move key keeps going.
@@ -16,6 +18,14 @@ hl.bind(mod .. " + J", hl.dsp.layout("togglesplit"), { desc = "toggle split" })
 
 -- Groups stack windows into one frame with a tab bar.
 hl.bind(mod .. " + G", hl.dsp.group.toggle(), { desc = "toggle group" })
+
+-- Game mode: no gaps, no rounding, no blur, nothing transparent, and the bar
+-- shrinks to a sliver. SUPER+CTRL+G because SUPER+G is the group toggle above
+-- and HyDE's SUPER+ALT+G is not worth keeping for its own sake.
+--
+-- Through the role rather than the script, so the bar's own chip and the
+-- compositor cannot disagree about whether it is on.
+hl.bind(mod .. " + CONTROL + G", roles.action("gamemode"), { desc = "game mode" })
 hl.bind(mod .. " + CONTROL + H", hl.dsp.group.prev(), { desc = "group: previous" })
 hl.bind(mod .. " + CONTROL + L", hl.dsp.group.next(), { desc = "group: next" })
 
