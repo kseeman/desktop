@@ -7,6 +7,7 @@
 # Strips the desktop's eye-candy while gaming, and puts it back.
 #
 #   gamemode.sh on     no gaps, no rounding, no blur, nothing transparent
+#                      -- borders stay, or windows become one surface
 #   gamemode.sh off    back to the rice
 #
 # Called by the pill: Singletons/GameMode.qml runs this whenever
@@ -53,7 +54,12 @@ case "$1" in
         # desktop, and Hyprland applies the table atomically.
         hyprctl eval '
             hl.config({
-                general = { gaps_in = 0, gaps_out = 0, border_size = 0 },
+                -- border_size is deliberately not touched. Zeroing it as well
+                -- as the gaps leaves adjacent windows as one undivided surface
+                -- with no telling where one ends -- which is worse to play
+                -- next to than a gap. Borders cost no space once the gaps are
+                -- gone, and they follow the rice like everything else.
+                general = { gaps_in = 0, gaps_out = 0 },
                 decoration = {
                     rounding = 0,
                     active_opacity = 1.0,
