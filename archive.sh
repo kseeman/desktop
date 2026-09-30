@@ -85,8 +85,11 @@ read_passphrase() {
         echo ""
     fi
 
+    # Worded for every caller, not just put: verify and get read an archive and
+    # write nothing, so "refusing to write an archive nothing protects" was
+    # simply untrue on two of the three paths.
     [[ -n "$PASSPHRASE" ]] || {
-        echo "No passphrase; refusing to write an archive nothing protects." >&2
+        echo "No passphrase, and no terminal to ask for one." >&2
         echo "Run this from a terminal, or set DOTFILES_ARCHIVE_PASSPHRASE." >&2
         exit 1
     }
