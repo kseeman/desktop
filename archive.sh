@@ -58,10 +58,27 @@ read_passphrase() {
         return 0
     fi
 
-    read -rsp "    Passphrase: " PASSPHRASE
-    echo ""
+    # From the terminal rather than stdin, so the passphrase is never taken out
+    # of a pipe and this still prompts when stdin is redirected.
+    #
+    # `|| true` matters more than it looks. `read` returns non-zero on EOF, and
+    # under `set -e` that killed the script *before* the guard below could say
+    # anything -- so running this without a terminal gave a silent exit 1 and an
+    # empty destination directory, which is the worst way to learn that nothing
+    # was archived.
+    # Opened rather than tested with -r: /dev/tty passes a readability test even
+    # with no controlling terminal, and only fails when something tries to open
+    # it ("No such device or address").
+    PASSPHRASE=""
+
+    if { : < /dev/tty; } 2> /dev/null; then
+        read -rsp "    Passphrase: " PASSPHRASE < /dev/tty || PASSPHRASE=""
+        echo ""
+    fi
+
     [[ -n "$PASSPHRASE" ]] || {
-        echo "Empty passphrase; refusing to write an archive nothing protects." >&2
+        echo "No passphrase; refusing to write an archive nothing protects." >&2
+        echo "Run this from a terminal, or set DOTFILES_ARCHIVE_PASSPHRASE." >&2
         exit 1
     }
 }
@@ -153,7 +170,6 @@ cmd_put() {
     }
 
     require_mounted
-    mkdir -p "$DEST"
 
     info "Archiving $name"
     echo "    from $src"
@@ -168,6 +184,10 @@ cmd_put() {
     # The sha256 is of the encrypted stream, so it verifies what is actually on
     # the stick rather than what was meant to be written.
     read_passphrase
+
+    # After the passphrase, so a refused prompt leaves nothing behind. An empty
+    # directory on the stick looks like an archive that failed halfway.
+    mkdir -p "$DEST"
 
     tar -C "$SNAPSHOT_ROOT" -czf - "$name" \
         | gpg --symmetric --cipher-algo AES256 --batch --yes \
