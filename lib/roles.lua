@@ -40,6 +40,11 @@ local DEFAULT = {
     media = "pill",
     audio = "pill",
 
+    -- Stripping the desktop for a game is a whole-desktop state, so it is a
+    -- role rather than a binding that knows about the bar: swapping the bar
+    -- means the replacement answers for this too.
+    gamemode = "pill",
+
     lock = "hyprlock",
 
     -- The pill offers one too; this is what the key has always opened.
