@@ -33,5 +33,7 @@ return {
         -- from the reference design. Raising this makes everything faster
         -- together rather than drifting out of step.
         motion_speed = 4.2,
+
+        icon_theme = "Tela-circle-purple",
     },
 }

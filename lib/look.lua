@@ -52,6 +52,15 @@ local DEFAULT = {
     -- how one image meets one screen, and the common want -- plain black behind
     -- a mostly-black image -- is not a palette colour and should not become one.
     wallpaper_fill = "sampled",
+
+    -- Icon theme for Qt and GTK applications.
+    --
+    -- Not a colour and not derivable from one: an icon set is drawn art, so a
+    -- rice names one that suits it rather than tinting whatever is installed.
+    -- Tela-circle ships a dozen accents, which is why it is the one named here.
+    --
+    -- A rice that names none keeps whatever is set, the same as the wallpaper.
+    icon_theme = "Tela-circle-grey",
 }
 
 return setmetatable(rice.look, { __index = DEFAULT })

@@ -39,6 +39,7 @@ end
 local palette = require("lib.palette")
 local paths = require("lib.paths")
 local roles = require("lib.roles")
+local look = require("lib.look")
 
 local verbose = false
 for _, a in ipairs(arg or {}) do
@@ -61,6 +62,25 @@ local FORMS = {
     [":bare"] = function(hex)
         return (hex:gsub("^#", ""))
     end,
+    -- KDE colour schemes take decimal triples, not hex.
+    [":rgb"] = function(hex)
+        local h = hex:gsub("^#", "")
+        return ("%d,%d,%d"):format(
+            tonumber(h:sub(1, 2), 16),
+            tonumber(h:sub(3, 4), 16),
+            tonumber(h:sub(5, 6), 16)
+        )
+    end,
+}
+
+-- Not every substitution is a colour. The icon theme is a look knob a rice
+-- names, and it belongs in the same generated files as the colours -- kdeglobals
+-- carries both -- so it resolves here rather than through a second mechanism.
+--
+-- Only names the palette does not define are looked up here, so a colour can
+-- never be shadowed by one of these.
+local LOOK = {
+    icon_theme = look.icon_theme,
 }
 
 -- Substitution is textual and applies to the whole file, comments included, so
@@ -70,6 +90,20 @@ local function substitute(text, source)
 
     local rendered = text:gsub("@([%w_]+)(:?%a*)@", function(name, form)
         local value = palette[name]
+
+        if type(value) ~= "string" then
+            local plain = LOOK[name]
+
+            -- A look value is text, so the colour forms do not apply to it.
+            if type(plain) == "string" then
+                if form ~= "" then
+                    missing[#missing + 1] = name .. form .. " (not a colour)"
+                    return ""
+                end
+
+                return plain
+            end
+        end
 
         -- Unknown names are fatal rather than left in place. A stray @accnet@
         -- would otherwise reach hyprlock as a literal and fail at a lock
@@ -135,6 +169,111 @@ local function write(path, text)
     f:close()
 end
 
+-- Merge rendered `[Section] key=value` pairs into an existing ini, leaving every
+-- other key and section alone.
+--
+-- Needed because kdeglobals, kvantum.kvconfig and the qt*ct configs are live
+-- files the applications write to themselves -- file-dialog geometry, wallet
+-- settings, whatever Kvantum Manager last did. Generating them whole would take
+-- those with it on every render, which is the write-through hazard hypridle.conf
+-- already taught this repo once.
+--
+-- Deliberately dumb: no type awareness, no comment preservation beyond passing
+-- lines through untouched. These are ini files written by Qt, not by hand.
+-- Sorted, so a fresh machine writes the same file twice rather than following
+-- pairs() iteration -- the same reason active_providers() sorts.
+local function sorted_keys(tb)
+    local keys = {}
+    for k in pairs(tb) do
+        keys[#keys + 1] = k
+    end
+    table.sort(keys)
+    return keys
+end
+
+local function merge_ini(path, text)
+    local wanted = {}
+    local order = {}
+    local section
+
+    for line in (text .. "\n"):gmatch("([^\n]*)\n") do
+        local name = line:match("^%s*%[([^%]]+)%]%s*$")
+
+        if name then
+            section = name
+            if not wanted[section] then
+                wanted[section] = {}
+                order[#order + 1] = section
+            end
+        elseif section then
+            local k, v = line:match("^%s*([^=%s]+)%s*=%s*(.*)$")
+            if k then
+                wanted[section][k] = v
+            end
+        end
+    end
+
+    local out = {}
+    local seen = {}
+    local current
+
+    local existing = io.open(path, "r")
+
+    if existing then
+        for line in existing:lines() do
+            local name = line:match("^%s*%[([^%]]+)%]%s*$")
+
+            if name then
+                -- Flush any keys this section should have but did not.
+                if current and wanted[current] then
+                    for _, k in ipairs(sorted_keys(wanted[current])) do
+                        if not seen[current .. "\0" .. k] then
+                            out[#out + 1] = k .. "=" .. wanted[current][k]
+                        end
+                    end
+                end
+
+                current = name
+                seen[current] = true
+                out[#out + 1] = line
+            else
+                local k = line:match("^%s*([^=%s]+)%s*=")
+                local replacement = k and current and wanted[current] and wanted[current][k]
+
+                if replacement then
+                    out[#out + 1] = k .. "=" .. replacement
+                    seen[current .. "\0" .. k] = true
+                else
+                    out[#out + 1] = line
+                end
+            end
+        end
+
+        existing:close()
+
+        if current and wanted[current] then
+            for _, k in ipairs(sorted_keys(wanted[current])) do
+                if not seen[current .. "\0" .. k] then
+                    out[#out + 1] = k .. "=" .. wanted[current][k]
+                end
+            end
+        end
+    end
+
+    -- Sections the file did not have at all.
+    for _, name in ipairs(order) do
+        if not seen[name] then
+            out[#out + 1] = ""
+            out[#out + 1] = "[" .. name .. "]"
+            for _, k in ipairs(sorted_keys(wanted[name])) do
+                out[#out + 1] = k .. "=" .. wanted[name][k]
+            end
+        end
+    end
+
+    write(path, table.concat(out, "\n") .. "\n")
+end
+
 -- -----------------------------------------------------------------------------
 -- Render
 -- -----------------------------------------------------------------------------
@@ -158,6 +297,24 @@ local BASE = {
     -- $THEME_DIR. Read by nvim/lua/themes/rice.lua, which owns the mapping
     -- onto base46's names.
     { src = "nvim.lua.in", out = "$THEME_DIR/nvim.lua" },
+
+    -- Qt, in four parts, because Qt theming is in four places.
+    --
+    -- Kvantum draws the widgets and takes its colours from its own theme rather
+    -- than from any palette, which is why recolouring it is unavoidable: with
+    -- the theme left alone, every colour below is overruled on screen.
+    { src = "qt/kvantum-theme.kvconfig.in", out = "$XDG_CONFIG_HOME/Kvantum/rice/rice.kvconfig" },
+    { src = "qt/kvantum-theme.svg.in", out = "$XDG_CONFIG_HOME/Kvantum/rice/rice.svg" },
+    { src = "qt/kvantum.kvconfig.in", out = "$XDG_CONFIG_HOME/Kvantum/kvantum.kvconfig", merge = true },
+
+    -- KDE applications (Dolphin, Ark, Gwenview) read kdeglobals and ignore the
+    -- qt*ct palette entirely.
+    { src = "qt/kdeglobals.in", out = "$XDG_CONFIG_HOME/kdeglobals", merge = true },
+
+    -- Non-KDE Qt applications read qt5ct/qt6ct instead. One scheme serves both.
+    { src = "qt/qtct-colors.conf.in", out = "$XDG_CONFIG_HOME/qt-color-schemes/rice.conf" },
+    { src = "qt/qtct.conf.in", out = "$XDG_CONFIG_HOME/qt5ct/qt5ct.conf", merge = true },
+    { src = "qt/qtct.conf.in", out = "$XDG_CONFIG_HOME/qt6ct/qt6ct.conf", merge = true },
 }
 
 local templates = {}
@@ -180,7 +337,11 @@ for _, template in ipairs(templates) do
     local text = f:read("a")
     f:close()
 
-    write(out, substitute(text, template.src))
+    if template.merge then
+        merge_ini(out, substitute(text, template.src))
+    else
+        write(out, substitute(text, template.src))
+    end
 
     count = count + 1
 

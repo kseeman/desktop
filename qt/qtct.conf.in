@@ -1,0 +1,10 @@
+# Merged: qt5ct.conf and qt6ct.conf also carry fonts, dialog and toolbar
+# settings that their own GUI writes.
+[Appearance]
+# A shared location rather than each tool's own colors/ directory, so one
+# rendered scheme serves both. qt5ct and qt6ct expand $XDG_CONFIG_HOME here
+# themselves -- that is their syntax, not this renderer's.
+color_scheme_path=$XDG_CONFIG_HOME/qt-color-schemes/rice.conf
+custom_palette=true
+icon_theme=@icon_theme@
+style=kvantum

@@ -1,0 +1,4 @@
+# Which Kvantum theme is active. Merged, because Kvantum Manager writes its own
+# keys into this file.
+[General]
+theme=rice

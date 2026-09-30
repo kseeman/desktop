@@ -1,0 +1,126 @@
+# KDE colour roles, generated from lib/palette.lua by render-theme.lua.
+#
+# Merged into kdeglobals rather than written over it: KDE applications keep
+# their own settings in that file -- file-dialog geometry, wallet, the terminal
+# to launch -- and write to it themselves. Only the keys below are replaced.
+#
+# **ColorScheme is what makes any of this apply.** With the [Colors:*] sections
+# present but unnamed, KDE ignores them and falls back to its own defaults,
+# which presents as a stubbornly light Dolphin no matter what the colours say.
+#
+# Negative, Neutral and Positive stay fixed rather than coming from the ramp,
+# for the reason kitty's ANSI colours and nvim's syntax hues do: an error, a
+# warning and a success have to be distinguishable from each other, which three
+# steps of one violet cannot manage.
+[Colors:View]
+BackgroundNormal=@base:rgb@
+BackgroundAlternate=@raised:rgb@
+ForegroundNormal=@fg:rgb@
+ForegroundInactive=@fg_dim:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@accent:rgb@
+ForegroundVisited=@accent_deep:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[Colors:Window]
+BackgroundNormal=@base:rgb@
+BackgroundAlternate=@raised:rgb@
+ForegroundNormal=@fg:rgb@
+ForegroundInactive=@fg_dim:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@accent:rgb@
+ForegroundVisited=@accent_deep:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[Colors:Button]
+BackgroundNormal=@raised:rgb@
+BackgroundAlternate=@overlay:rgb@
+ForegroundNormal=@fg:rgb@
+ForegroundInactive=@fg_dim:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@accent:rgb@
+ForegroundVisited=@accent_deep:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[Colors:Selection]
+BackgroundNormal=@accent:rgb@
+BackgroundAlternate=@accent_deep:rgb@
+ForegroundNormal=@fg_bright:rgb@
+ForegroundInactive=@fg_muted:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@fg_bright:rgb@
+ForegroundVisited=@fg_muted:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[Colors:Tooltip]
+BackgroundNormal=@raised:rgb@
+BackgroundAlternate=@overlay:rgb@
+ForegroundNormal=@fg:rgb@
+ForegroundInactive=@fg_dim:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@accent:rgb@
+ForegroundVisited=@accent_deep:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[Colors:Complementary]
+BackgroundNormal=@root:rgb@
+BackgroundAlternate=@base:rgb@
+ForegroundNormal=@fg:rgb@
+ForegroundInactive=@fg_dim:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@accent:rgb@
+ForegroundVisited=@accent_deep:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[Colors:Header]
+BackgroundNormal=@bar:rgb@
+BackgroundAlternate=@base:rgb@
+ForegroundNormal=@fg:rgb@
+ForegroundInactive=@fg_dim:rgb@
+ForegroundActive=@fg_bright:rgb@
+ForegroundLink=@accent:rgb@
+ForegroundVisited=@accent_deep:rgb@
+ForegroundNegative=218,68,83
+ForegroundNeutral=246,116,0
+ForegroundPositive=39,174,96
+DecorationFocus=@accent:rgb@
+DecorationHover=@accent:rgb@
+
+[General]
+ColorScheme=rice
+AccentColor=@accent:rgb@
+
+[UiSettings]
+# KDE reads the scheme name from here as well as [General]; leaving the old
+# one behind was enough to keep the previous colours on some applications.
+ColorScheme=rice
+
+[Icons]
+Theme=@icon_theme@
+
+[KDE]
+widgetStyle=kvantum
