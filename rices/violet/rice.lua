@@ -1,25 +1,16 @@
 return {
     description = "Ricelin's pill in a violet tonal ramp",
 
-    -- Role to provider. Partial on purpose: anything not named here keeps the
-    -- default from lib/roles.lua, so a rice that only swaps the launcher says
-    -- only that.
+    -- No providers block. This rice is the one the defaults in lib/roles.lua
+    -- were written from, and it used to restate the whole set here on the
+    -- grounds that seeing it once was worth more than brevity.
     --
-    -- Spelled out in full here because this is the rice the defaults were
-    -- written from, and seeing the whole set once is worth more than brevity.
-    providers = {
-        bar = "pill",
-        launcher = "pill",
-        clipboard = "pill",
-        notifications = "pill",
-        wallpaper = "pill",
-        tray = "pill",
-        media = "pill",
-        audio = "pill",
-
-        lock = "hyprlock",
-        power = "wlogout",
-    },
+    -- It is not: a restated default is a second copy that drifts, and this one
+    -- did. Pointing the wallpaper role at awww in lib/roles.lua changed nothing
+    -- while this block still pinned it to the pill -- the overriding was
+    -- working exactly as designed, which is what made it hard to see. Naming
+    -- only what a rice actually changes is the whole point of the table being
+    -- partial.
 
     -- Everything a look is beyond colour.
     look = {

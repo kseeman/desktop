@@ -23,8 +23,12 @@
 --   battery notify     this machine is a desktop.
 --   nm-applet,         the pill has its own wifi and bluetooth surfaces, and a
 --   blueman-applet     tray for everything else. These would duplicate it.
---   waybar, wallpaper  the pill replaces both: it is the bar, and it sets the
---                      wallpaper itself from Flags.wallpaperDir.
+--   waybar             the pill is the bar.
+--
+-- The wallpaper *is* started, through the roles loop below -- awww holds it and
+-- awww has to be running. It used to be in the list above, on the belief that
+-- the pill set the wallpaper itself; it does not, which is why a restart came
+-- up bare.
 local paths = require("lib.paths")
 local roles = require("lib.roles")
 
