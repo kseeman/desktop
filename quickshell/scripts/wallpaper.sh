@@ -45,7 +45,13 @@
 
 set -euo pipefail
 
-SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# `pwd -P`, not `pwd`: bash's cd is logical and keeps the symlinked path, so
+# through ~/.config/hypr/scripts -- which is how the bar invokes this -- the
+# strip below never fired and DESKTOP_DIR stayed at the symlink. Every lua
+# lookup then silently failed and each knob fell back to its built-in default,
+# so a rice setting wallpaper_fit or wallpaper_fill was ignored for anything
+# set from the picker.
+SCRIPTS_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 STATE="$STATE_HOME/ricelin-wallpaper"
