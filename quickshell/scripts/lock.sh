@@ -22,7 +22,15 @@
 
 set -euo pipefail
 
-SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# `pwd -P`, not `pwd`: bash's cd is logical, so this used to come back as the
+# symlink it was invoked through and the strip below never fired.
+#
+# That broke locking outright rather than degrading it. Both callers use the
+# ~/.config/hypr/scripts path -- hypridle.conf and the pill's power menu -- so
+# DESKTOP pointed at the symlink, lib.roles was not on package.path, the
+# command came back empty and this exited 1. No idle lock, no lock from the
+# menu, and no lock before sleep.
+SCRIPTS_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 # The symlink this is reached through lands in ~/.config/hypr/scripts, so the
 # desktop directory is worked out from the real file rather than from $0.

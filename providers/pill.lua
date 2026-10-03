@@ -2,7 +2,9 @@
 --
 -- Nine roles in one process, which is the thing to know before swapping it:
 -- "replace the bar" here means finding providers for the launcher, clipboard,
--- notifications, wallpaper, tray and the rest as well.
+-- notifications, tray and the rest as well.
+--
+-- Not the wallpaper, despite owning the picker for it: see providers/awww.lua.
 local paths = require("lib.paths")
 
 local PILL = paths.desktop_file("quickshell/pill")
@@ -29,7 +31,6 @@ return {
         "clipboard",
         "power",
         "notifications",
-        "wallpaper",
         "tray",
         "media",
         "audio",

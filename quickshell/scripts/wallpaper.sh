@@ -9,6 +9,7 @@
 #   wallpaper.sh resolve            work out the folder, record it
 #   wallpaper.sh set <path> [out]   set it, optionally on one output only
 #   wallpaper.sh current            print what is set
+#   wallpaper.sh restore            put the last one back, at session start
 #
 # The bar calls the first two; the contract is theirs, not ours. Singletons/
 # Walls.qml runs `resolve` before listing and `set` when you pick something, and
@@ -44,7 +45,13 @@
 
 set -euo pipefail
 
-SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# `pwd -P`, not `pwd`: bash's cd is logical and keeps the symlinked path, so
+# through ~/.config/hypr/scripts -- which is how the bar invokes this -- the
+# strip below never fired and DESKTOP_DIR stayed at the symlink. Every lua
+# lookup then silently failed and each knob fell back to its built-in default,
+# so a rice setting wallpaper_fit or wallpaper_fill was ignored for anything
+# set from the picker.
+SCRIPTS_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 STATE="$STATE_HOME/ricelin-wallpaper"
@@ -403,6 +410,93 @@ cmd_current() {
     return 0
 }
 
+# -----------------------------------------------------------------------------
+# Putting it back at session start
+# -----------------------------------------------------------------------------
+#
+# Nothing used to do this, and that is what made the wallpaper look like it did
+# not persist: startup started no setter, on the premise that the bar sets the
+# wallpaper itself. It does not -- the vendored Walls.qml only ever reads
+# `resolve` and `current`, and applies when you pick a thumb. awww-daemon was
+# started lazily inside ensure_daemon, which only `set` reaches, so after a
+# reboot there was no daemon either and nothing to put an image back.
+#
+# Reached through the `wallpaper` role rather than from autostart directly, so
+# this is the provider's start command. See providers/awww.lua.
+
+# Is every output already displaying the recorded wallpaper, the way `set`
+# would have put it there?
+#
+# Deliberately not "is an image displayed". awww keeps its own cache of a
+# resize mode and a path per output and restores from it when the daemon
+# starts, and that pair can be one this script never wrote: measured here, a
+# DP-1 entry reading `no <original>` put the unpadded original onto the
+# ultrawide -- an image file, the right file, and the wrong picture, which a
+# check for "something is up" waves through.
+#
+# So the question is whether what is up is what cmd_set produces: the recorded
+# image, or the pre-rendered frame for an output the fit workaround covers.
+# Asked with the same hits_fit_bug the setting path uses, so the two cannot
+# disagree about which outputs those are.
+#
+# False when there are no outputs at all, which is the right answer for a
+# daemon that has not seen one yet.
+displaying_recorded() {
+    local recorded="$1" line name width shown want found=0
+
+    while IFS= read -r line; do
+        name="$(printf '%s' "$line" | sed -n 's/^: \([^:]*\):.*/\1/p')"
+        [[ -n "$name" ]] || continue
+
+        width="$(printf '%s' "$line" | sed -n 's/^: [^:]*: \([0-9]\+\)x.*/\1/p')"
+
+        # Empty for an output showing a flat colour, which never matches.
+        shown="$(printf '%s' "$line" | sed -n 's/.*currently displaying: image: \(.*\)$/\1/p')"
+
+        if hits_fit_bug "$recorded" "$width"; then
+            want="$RENDER_DIR/$name.png"
+        else
+            want="$recorded"
+        fi
+
+        [[ "$shown" == "$want" ]] || return 1
+        found=1
+    done < <(awww query)
+
+    [[ "$found" -eq 1 ]]
+}
+
+cmd_restore() {
+    # Starting the daemon is most of the job: it restores its own per-output
+    # cache as it comes up, so by the time this returns the screen is usually
+    # already dressed and there is nothing left to do.
+    ensure_daemon
+
+    local recorded
+    recorded="$(cmd_current)"
+
+    # cmd_current, not $STATE: it already refuses a path that no longer exists,
+    # and a wallpaper that was moved or deleted has no restore. Leaving the
+    # background bare says that; picking something else would hide it.
+    [[ -n "$recorded" ]] || {
+        echo "no wallpaper to restore" >&2
+        return 0
+    }
+
+    displaying_recorded "$recorded" && return 0
+
+    # Whatever awww had was missing, stale or fitted differently, so set the
+    # recorded wallpaper properly -- which re-renders any frame the fit
+    # workaround needs and regenerates the palette on the way, so a cleared
+    # cache heals rather than coming back subtly wrong.
+    #
+    # `awww restore` is deliberately not tried first. It replays awww's cached
+    # pair rather than asking this script what the wallpaper should look like,
+    # which is how the stale `no <original>` above got onto a screen. cmd_set
+    # is the one thing that knows, so it is the only thing that sets.
+    cmd_set "$recorded"
+}
+
 case "${1:-current}" in
     resolve) cmd_resolve ;;
     set)
@@ -410,7 +504,8 @@ case "${1:-current}" in
         cmd_set "$@"
         ;;
     current) cmd_current ;;
-    --help | -h) sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//' ;;
+    restore) cmd_restore ;;
+    --help | -h) sed -n '3,21p' "$0" | sed 's/^# \{0,1\}//' ;;
     *)
         echo "wallpaper.sh: unknown command: $1" >&2
         exit 1

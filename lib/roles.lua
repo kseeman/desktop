@@ -35,7 +35,6 @@ local DEFAULT = {
     launcher = "pill",
     clipboard = "pill",
     notifications = "pill",
-    wallpaper = "pill",
     tray = "pill",
     media = "pill",
     audio = "pill",
@@ -44,6 +43,11 @@ local DEFAULT = {
     -- role rather than a binding that knows about the bar: swapping the bar
     -- means the replacement answers for this too.
     gamemode = "pill",
+
+    -- awww rather than the pill, which is what this said while nothing
+    -- restored the wallpaper at login. The pill is the picker; awww is what
+    -- holds an image on the background layer and has to be started.
+    wallpaper = "awww",
 
     lock = "hyprlock",
 
