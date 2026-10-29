@@ -1,0 +1,72 @@
+# Arch package manifest for the desktop. One package per line; blank lines and
+# # comments ignored.
+#
+# Installed by install.sh with: pacman -S --needed
+# AUR packages belong in aur.txt instead.
+#
+# The tools every machine uses -- the shell, nvim, tmux, kitty and its font --
+# are the dotfiles repo's manifest, not this one, and are installed before this.
+
+# Symmetric encryption for archive.sh, which copies a snapshot to removable
+# storage. The archive holds secrets and shell history and the stick has no
+# permissions to protect them with.
+gnupg
+
+# -----------------------------------------------------------------------------
+# Hyprland desktop
+# -----------------------------------------------------------------------------
+#
+# Everything here is Linux-only by nature, which is why it has no Brewfile
+# counterpart.
+#
+# HyDE's own installer also pulls most of these in. Listing them anyway means a
+# Linux machine reaches a working Hyprland session without HyDE, and documents
+# what the tracked hypr/ configs actually depend on. `pacman -S --needed` makes
+# the overlap a no-op.
+#
+# NOT listed on purpose:
+#   pipewire-*, power-profiles-daemon  system plumbing CachyOS provides and this
+#                                      repo never configures
+#   hyprquery-git, hyprland-guiutils   HyDE dependencies — its installer's job
+#                                      (and hyprquery-git is chaotic-aur, not a
+#                                      standard Arch repo)
+#   dolphin and other applications     app choices with no configuration here
+
+# Session core
+hyprland
+# External monitor brightness, which the bar shells out to.
+ddcutil
+
+# The bar, launcher and notification surfaces are a Quickshell shell rather
+# than waybar: the media popup the design calls for -- album art with a
+# draggable scrubber -- is not something waybar can be configured into.
+quickshell
+hyprlock
+hypridle
+# The notification fallback, not the notification server. The bar claims
+# org.freedesktop.Notifications at startup and only one process may hold it, so
+# dunst is never D-Bus activated while the bar is alive -- and starts itself if
+# the bar dies, which is worth keeping.
+dunst
+sddm
+polkit-gnome
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+
+# Wayland utilities
+grim
+slurp
+hyprshot
+hyprpicker
+hyprsunset
+cliphist
+wl-clip-persist
+nwg-displays
+nwg-look
+
+# Qt/GTK theming. Themes under os/linux/hyde-themes/ ship a kvantum/ directory,
+# and HyDE points qt5ct/qt6ct at the active theme.
+kvantum
+kvantum-qt5
+qt5ct
+qt6ct

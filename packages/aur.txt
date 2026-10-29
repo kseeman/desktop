@@ -1,0 +1,7 @@
+# AUR package manifest for the desktop, installed with paru (or yay) by
+# install.sh. One package per line; blank lines and # comments ignored.
+#
+# Prefer pacman.txt; only add here when a package genuinely isn't in
+# extra/core, since AUR builds are slower and less reliable.
+gpu-screen-recorder
+matugen
