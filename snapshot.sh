@@ -305,8 +305,11 @@ fi
 hyde_remote="$(git -C "$HOME/HyDE" remote get-url origin 2>/dev/null || echo "-")"
 hyde_commit="$(git -C "$HOME/HyDE" rev-parse HEAD 2>/dev/null || echo "-")"
 
-dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-dotfiles_commit="$(git -C "$dotfiles_dir" rev-parse HEAD 2>/dev/null || echo "-")"
+# Two repositories make up this desktop: this one, and the dotfiles it is
+# installed on top of. ~/.dotfiles is that one's link.
+desktop_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+desktop_commit="$(git -C "$desktop_dir" rev-parse HEAD 2>/dev/null || echo "-")"
+dotfiles_commit="$(git -C "$HOME/.dotfiles" rev-parse HEAD 2>/dev/null || echo "-")"
 
 if [[ "$DRY_RUN" == true ]]; then
     echo "[dry-run] write META"
@@ -320,11 +323,12 @@ kernel          $(uname -r)
 hyprland        $(hyprctl version 2>/dev/null | head -1 || echo "-")
 hyde_remote     $hyde_remote
 hyde_commit     $hyde_commit
+desktop_commit  $desktop_commit
 dotfiles_commit $dotfiles_commit
 label           ${LABEL:--}
 
 This archive contains private data (shell history, application state).
-It lives outside the dotfiles repository on purpose. Do not commit it.
+It lives outside the dotfiles and desktop repositories on purpose. Do not commit it.
 EOF
 fi
 

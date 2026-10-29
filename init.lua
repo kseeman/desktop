@@ -13,10 +13,10 @@
 -- there would silently take the session away from HyDE while it is still the
 -- default.
 --
--- Verify before logging in -- os/linux/desktop/verify-config.sh does this, and
+-- Verify before logging in -- verify-config.sh does this, and
 -- the installer refuses to link a config that fails:
 --
---   Hyprland --verify-config -c os/linux/desktop/init.lua
+--   Hyprland --verify-config -c init.lua
 --
 -- One rule this file and everything it requires must keep: no exec at the top
 -- level. Verifying a config runs it, so a top-level hl.exec_cmd launches the

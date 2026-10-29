@@ -1,5 +1,5 @@
 [Desktop Entry]
-# Installed to /usr/share/wayland-sessions/ by os/linux/install.sh, which
+# Installed to /usr/share/wayland-sessions/ by install.sh, which
 # substitutes @INIT_LUA@ for the absolute path to this repo's init.lua.
 #
 # A template rather than a tracked file because the path has to be absolute --

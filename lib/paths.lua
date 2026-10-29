@@ -31,7 +31,7 @@ local cache = os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")
 M.theme = cache .. "/dotfiles/theme/"
 
 --- Absolute path to something inside the desktop directory.
---- @param rel string path relative to os/linux/desktop
+--- @param rel string path relative to the desktop directory
 --- @return string
 function M.desktop_file(rel)
     return M.desktop .. rel
