@@ -1,0 +1,3 @@
+# Session worktrees created by Claude Code inside the repo
+.claude/worktrees/
+.claude/settings.local.json
