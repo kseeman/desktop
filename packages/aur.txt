@@ -5,3 +5,5 @@
 # extra/core, since AUR builds are slower and less reliable.
 gpu-screen-recorder
 matugen
+# The power menu (providers/wlogout.lua). Not in the official repos.
+wlogout

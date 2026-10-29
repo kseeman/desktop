@@ -34,6 +34,13 @@ gnupg
 
 # Session core
 hyprland
+# The session entry launches Hyprland through `uwsm start`, and install.sh
+# dry-runs that command line before installing the entry.
+uwsm
+# render-theme.lua, rice.sh and the lock and wallpaper scripts call the `lua`
+# interpreter directly. Hyprland's package depends on it today, which is not a
+# promise to this repo.
+lua
 # External monitor brightness, which the bar shells out to.
 ddcutil
 
@@ -48,6 +55,9 @@ hypridle
 # dunst is never D-Bus activated while the bar is alive -- and starts itself if
 # the bar dies, which is worth keeping.
 dunst
+# The wallpaper role (providers/awww.lua), and wallpaper.sh, which sets and
+# restores it.
+awww
 sddm
 polkit-gnome
 xdg-desktop-portal-hyprland
