@@ -18,7 +18,7 @@ import "Singletons"
  * spec, evals the new one through `hl.monitor` and arms a detached 12s watchdog
  * that reverts if the change is not confirmed — so a mode that blanks the
  * screen heals itself even if the pill dies. A confirmed Keep clears the
- * watchdog and persists by rewriting that output's block in monitors.lua, or
+ * watchdog and persists by rewriting that output's block in local.lua, or
  * appending one when the file does not know the output yet (port swaps rename
  * outputs, so a stale file must never swallow a save). Leaving the surface
  * with a change still pending reverts it right away instead of letting the
@@ -28,11 +28,17 @@ import "Singletons"
  * the live workspaces to their new monitors and marks the output primary for
  * XWayland via xrandr.
  *
- * monitors.lua is held as in-memory text after the first read and every rewrite
+ * local.lua is held as in-memory text after the first read and every rewrite
  * goes through it, so a main swap and a later Keep in the same session never
  * clobber each other through a stale FileView cache. The card rows join the
  * surface row registry, so hover, the soul seam and keyboard focus behave like
  * the other settings surfaces.
+ *
+ * Persistence targets this machine's local.lua rather than upstream's
+ * modules/monitors.lua: monitor geometry is machine-local by this repo's
+ * rules, and local.lua is where it lives. The rewrites are surgical (only the
+ * named fields of the named block, or the two loops' monitor names), so the
+ * NVIDIA and env blocks sharing the file are never touched.
  */
 SettingsSurface {
     id: root
@@ -40,7 +46,7 @@ SettingsSurface {
     backSurface: "settings"
     implicitHeight: content.implicitHeight
 
-    readonly property string monitorsPath: Quickshell.env("HOME") + "/.config/hypr/modules/monitors.lua"
+    readonly property string monitorsPath: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/dotfiles/hypr/local.lua"
     readonly property string helper: Quickshell.env("HOME") + "/.config/hypr/scripts/display-apply.sh"
 
     property var monitors: []
@@ -238,7 +244,7 @@ SettingsSurface {
     }
 
     /**
-     * monitors.lua as in-memory text: read once, then every rewrite updates it
+     * local.lua as in-memory text: read once, then every rewrite updates it
      * before hitting disk, so back-to-back edits never read a stale file cache.
      */
     function luaNow() {
@@ -249,7 +255,7 @@ SettingsSurface {
 
     /** The main monitor is whichever one the workspace-1 rule loop points at. */
     function mainFromLua(text) {
-        var re = /for\s+i\s*=\s*(\d+)\s*,\s*(\d+)\s+do\s*\n\s*hl\.workspace_rule\(\{[^}]*monitor\s*=\s*"([^"]+)"/g;
+        var re = /for\s+\w+\s*=\s*(\d+)\s*,\s*(\d+)\s+do\s*\n\s*hl\.workspace_rule\(\{[^}]*monitor\s*=\s*"([^"]+)"/g;
         var m;
         while ((m = re.exec(text)) !== null)
             if (parseInt(m[1], 10) <= 1 && parseInt(m[2], 10) >= 1)
@@ -266,7 +272,7 @@ SettingsSurface {
         var res = Mon.setWorkspaceLoops(luaNow(), name, other.name);
         card.pendingMain = false;
         if (!res.ok) {
-            note = "Could not rewrite the workspace rules in monitors.lua.";
+            note = "Could not rewrite the workspace rules in local.lua.";
             return;
         }
         luaText = res.text;
@@ -332,7 +338,13 @@ SettingsSurface {
         command: ["sh", "-c", "sh \"$1\" revert \"$2\"", "sh", root.helper, out]
     }
 
-    /** Drags each live workspace onto its new monitor after a main swap. */
+    /**
+     * Drags each live workspace onto its new monitor after a main swap. The
+     * dispatcher goes through the Lua form — the legacy `moveworkspacetomonitor
+     * 1 DP-1` syntax is rejected by the non-legacy parser. A workspace that has
+     * not been created yet warns and is skipped, which is right: the rewritten
+     * rules place it when it is first visited.
+     */
     Process {
         id: wsMoveProc
         property string mainOut: ""
@@ -340,8 +352,8 @@ SettingsSurface {
         property var mainRange: [1, 5]
         property var otherRange: [6, 10]
         command: ["sh", "-c",
-            "for i in $(seq \"$1\" \"$2\"); do hyprctl dispatch moveworkspacetomonitor \"$i\" \"$3\" >/dev/null 2>&1; done; " +
-            "for i in $(seq \"$4\" \"$5\"); do hyprctl dispatch moveworkspacetomonitor \"$i\" \"$6\" >/dev/null 2>&1; done",
+            "for i in $(seq \"$1\" \"$2\"); do hyprctl dispatch \"hl.dsp.workspace.move({ workspace = \\\"$i\\\", monitor = \\\"$3\\\" })\" >/dev/null 2>&1; done; " +
+            "for i in $(seq \"$4\" \"$5\"); do hyprctl dispatch \"hl.dsp.workspace.move({ workspace = \\\"$i\\\", monitor = \\\"$6\\\" })\" >/dev/null 2>&1; done",
             "sh", String(mainRange[0]), String(mainRange[1]), mainOut,
             String(otherRange[0]), String(otherRange[1]), otherOut]
     }
@@ -386,7 +398,7 @@ SettingsSurface {
 
     /**
      * Confirm the pending change: clear the helper's watchdog so it will not
-     * revert, persist by rewriting that output's block in monitors.lua, then
+     * revert, persist by rewriting that output's block in local.lua, then
      * quietly re-read the live layout so the map lands on ground truth.
      */
     function keep() {
@@ -397,7 +409,7 @@ SettingsSurface {
         var res = Mon.setMonitor(luaNow(), applyProc.out, applyProc.mode, applyProc.position, applyProc.scale);
         cancelCountdown();
         if (!res.ok) {
-            root.note = "Live for now, but monitors.lua was not written: " + res.error;
+            root.note = "Live for now, but local.lua was not written: " + res.error;
             return;
         }
         luaText = res.text;
@@ -446,7 +458,7 @@ SettingsSurface {
         atomicWrites: true
         printErrors: false
         onSaveFailed: (err) => {
-            root.note = "Live mode kept, but writing monitors.lua failed.";
+            root.note = "Live mode kept, but writing local.lua failed.";
             console.log("display: write failed: " + err);
         }
     }
