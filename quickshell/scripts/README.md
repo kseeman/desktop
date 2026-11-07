@@ -14,6 +14,17 @@ displaced.
 
 ## Present
 
+  - `display-apply.sh` — written fresh rather than ported. It serves the
+    Display surface's `apply`/`keep`/`revert` contract, but upstream's version
+    drives `hyprctl keyword`, which this desktop's Lua config refuses — so
+    every change goes through `hyprctl eval` running `hl.monitor`. `apply`
+    snapshots the output's current mode to `$XDG_RUNTIME_DIR` and arms a
+    detached 12s watchdog that reverts unless `keep` lands first, so a mode
+    the monitor cannot display heals itself even if the pill dies with the
+    screen blank. POSIX sh, because the surface invokes it as `sh "$helper"`
+    and the shebang never runs. Persistence is the surface's job, not this
+    script's: it rewrites `local.lua` itself after `keep`.
+
   - `launch-guard.sh` — verbatim. Runs the app, keeps the first 64K of stderr,
     and toasts exit code plus stderr with a Copy action if it dies non-zero
     within five seconds. Later exits are the user closing the app and stay
@@ -59,9 +70,8 @@ Not oversights — each needs a decision rather than a copy:
     twice.
   - `lock.sh` — this desktop locks with its own hyprlock config; theirs would
     reach for a setup that is not here.
-  - `display-apply.sh`, `gamemode.sh`, `minimize-toggle.sh`,
-    `special-toggle.sh`, `rec-thumbs.sh` — each drives a surface that has not
-    been exercised yet. Port on first use, not before.
+  - `minimize-toggle.sh`, `special-toggle.sh`, `rec-thumbs.sh` — each drives
+    a surface that has not been exercised yet. Port on first use, not before.
 
 The consequence while one is absent is always the same shape: the surface
 opens, looks right, and its buttons do nothing.
