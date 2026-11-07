@@ -133,7 +133,9 @@ function appendMonitor(luaText, output, mode, position, scale) {
  * ok is false when the file does not hold exactly two loops.
  */
 function setWorkspaceLoops(luaText, mainName, otherName) {
-    var re = /(for\s+i\s*=\s*(\d+)\s*,\s*(\d+)\s+do\s*\n\s*hl\.workspace_rule\(\{[^}]*monitor\s*=\s*")([^"]+)(")/g;
+    // \w+ not a literal `i`: the file this desktop persists into names its
+    // loop variable `id`, and the variable's name is not part of the contract.
+    var re = /(for\s+\w+\s*=\s*(\d+)\s*,\s*(\d+)\s+do\s*\n\s*hl\.workspace_rule\(\{[^}]*monitor\s*=\s*")([^"]+)(")/g;
     var hits = [];
     var m;
     while ((m = re.exec(luaText)) !== null)

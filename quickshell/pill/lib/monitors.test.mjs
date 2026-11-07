@@ -62,6 +62,49 @@ ok(swappedBack.text.includes('monitor = "HDMI-A-1" })\nend\n\nfor i = 6, 10'), "
 const noLoops = setWorkspaceLoops("hl.monitor({ output = \"DP-1\" })\n", "A", "B");
 ok(!noLoops.ok, "missing loops report failure");
 
+// The shape this desktop actually persists into: local.lua holds the monitor
+// blocks and workspace loops alongside env/config blocks the rewriters must
+// never touch, plus a bare workspace_rule outside any loop (a third monitor's
+// workspace), which the loop regex must not count.
+const localLua = `hl.monitor({
+    output = "DP-1",
+    mode = "5120x1440@239.76",
+    position = "520x3255",
+    scale = 1.0,
+})
+
+hl.env("LIBVA_DRIVER_NAME", "nvidia")
+
+hl.config({
+    cursor = {
+        no_hardware_cursors = true,
+    },
+})
+
+for id = 1, 7 do
+    hl.workspace_rule({ workspace = tostring(id), monitor = "DP-1", default = id == 1 })
+end
+
+for id = 8, 9 do
+    hl.workspace_rule({ workspace = tostring(id), monitor = "DP-2", default = id == 8 })
+end
+
+hl.workspace_rule({ workspace = "10", monitor = "HDMI-A-1", default = true })
+`;
+
+const localSet = setMonitor(localLua, "DP-1", "5120x1440@120", "0x0", 1);
+ok(localSet.ok, "local.lua: monitor block rewritten");
+ok(localSet.text.includes('mode = "5120x1440@120"'), "local.lua: mode replaced in place");
+ok(localSet.text.includes("no_hardware_cursors = true"), "local.lua: hl.config block untouched");
+ok(localSet.text.includes('hl.env("LIBVA_DRIVER_NAME", "nvidia")'), "local.lua: hl.env untouched");
+
+const localLoops = setWorkspaceLoops(localLua, "DP-2", "DP-1");
+ok(localLoops.ok, "local.lua: bare workspace_rule does not count as a loop");
+eq(localLoops.mainRange, [1, 7], "local.lua: main range follows workspace 1");
+eq(localLoops.otherRange, [8, 9], "local.lua: other range");
+ok(localLoops.text.includes('{ workspace = "10", monitor = "HDMI-A-1", default = true }'),
+    "local.lua: bare rule keeps its monitor");
+
 const parsed = parse(JSON.stringify([{
     name: "DP-3", width: 2560, height: 1440, refreshRate: 279.96, scale: 1, x: 0, y: 0,
     availableModes: ["2560x1440@279.96Hz", "bogus"]

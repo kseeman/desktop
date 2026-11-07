@@ -95,6 +95,28 @@ hand if this is ever re-copied from upstream.
     goes away, including a crash. `setpriv` is util-linux, so it is always
     present.
 
+  - `Display.qml` + `lib/monitors.js` + `lib/monitors.test.mjs` — the Display
+    surface persists to this machine's config, not upstream's.
+
+    `monitorsPath` points at `$XDG_CONFIG_HOME/dotfiles/hypr/local.lua`
+    (upstream: `~/.config/hypr/modules/monitors.lua`, which does not exist
+    here); monitor geometry is machine-local by this repo's rules and local.lua
+    is where it lives. The note strings name the right file. The workspace-loop
+    regexes (one in `mainFromLua`, one in `setWorkspaceLoops`) accept any loop
+    variable name rather than a literal `i`, because local.lua writes
+    `for id = ...` — with the upstream regex the surface finds no loops and
+    "Set as main" refuses to save. `wsMoveProc` dispatches through
+    `hl.dsp.workspace.move({...})`: the legacy `moveworkspacetomonitor 1 DP-1`
+    syntax upstream uses is rejected by the non-legacy (Lua) config parser,
+    so every move silently failed. The test file gains a case shaped like the
+    real local.lua — loops named `id`, a bare third-monitor rule outside any
+    loop, env and config blocks as bystanders.
+
+    The helper contract is unchanged, but the script itself is ours:
+    `scripts/display-apply.sh` is written fresh around `hyprctl eval` (see
+    `quickshell/scripts/README.md`), because upstream's drives
+    `hyprctl keyword`.
+
   - `Pill.qml` — the body's drop shadow is off (`layer.enabled: false` where
     upstream has `!pill.morphing` and a `MultiEffect`). Upstream draws a
     0.7-blur shadow at 50% black offset 3px down, which reads as a halo pooling
